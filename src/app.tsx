@@ -22,7 +22,7 @@ export class App extends React.Component<{}, AppState> {
     this.state = {
       query: "",
       author: "",
-      after: null,
+      after: "7d",
       sortType: "created_utc",
       sort: "desc",
       filter: "",
@@ -287,10 +287,10 @@ export class App extends React.Component<{}, AppState> {
               <select onChange={this.handleAfterDateChange}
                       value={this.state.after}
                       className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                <option value="1d">24 Hours</option>
+                <option value="1d">1 Day</option>
                 <option value="7d">1 Week</option>
                 <option value="31d">1 Month</option>
-                <option value="90d">90 Days</option>
+                <option value="90d">3 Months</option>
                 <option value="182d">6 Months</option>
                 <option value="1y">1 Year</option>
                 <option value="">Any</option>

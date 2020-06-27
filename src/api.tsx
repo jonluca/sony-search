@@ -51,7 +51,7 @@ export class PushshiftAPI {
         case /bank_account_bonus_week_/.test(permalink):
           data.data[i].thread = "Bank Account Bonus";
           break;
-        case /question_thread_/.test(permalink):
+        case /(question_thread_|newbie_question_)/.test(permalink):
           data.data[i].thread = "Daily Question";
           break;
         case /discussion_thread_/.test(permalink):
@@ -72,8 +72,8 @@ export class PushshiftAPI {
         case /weekly_offtopic_thread_week_/.test(permalink):
           data.data[i].thread = "Off Topic";
           break;
-        case /trip_reports_and_churning_success_stories_/.test(permalink):
-          data.data[i].thread = "Trip Reports & Success";
+        case /(trip_reports_and_churning_success_stories_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
+          data.data[i].thread = "Trip Report/Storytime";
           break;
         default:
           data.data[i].thread = "";
