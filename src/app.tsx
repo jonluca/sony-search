@@ -192,7 +192,7 @@ export class App extends React.Component<{}, AppState> {
 
         let threadBadge;
         if (comment.thread) {
-          threadBadge = <span className="inline-block bg-blue-600 rounded-full px-3 py-1 text-xs font-semibold text-white">
+          threadBadge = <span className="inline-block bg-blue-600 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2">
             {comment.thread}
           </span>
         }
@@ -201,15 +201,15 @@ export class App extends React.Component<{}, AppState> {
           <a href={`https://reddit.com${permalink}`} target="_blank">
             {comment.body}
           </a>
-          <div className="flex mt-3">
-            <div className="mr-auto">
+          <div className="md:flex mt-3">
+            <div className="inline-block md:block md:mr-auto">
               <div className="inline-block bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2"
                    title={new Date(comment.created_utc * 1000).toLocaleString()}>
                 {ta.ago((comment.created_utc * 1000))}
               </div>
               {threadBadge}
             </div>
-            <div className="">
+            <div className="inline-block md:block">
               <a className="inline-block bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2"
                  target="_blank"
                  href={`https://reddit.com/u/${comment.author}`}>
@@ -226,10 +226,10 @@ export class App extends React.Component<{}, AppState> {
       content = <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b flex px-6 py-2 items-center flex-none">
           <div className="flex flex-col font-bold">
-            Showing {filterCount < resultCount ? `${filterCount} filtered results from `: ''}{resultCount} total results
-          </div>
+            Showing {filterCount < resultCount ? `${filterCount} of `: ''}{resultCount} results
+		  </div>
           <div className="ml-auto flex items-center">
-            <label className="block text-gray-700 text-xs font-bold mr-2">Thread Filter</label>
+            <label className="hidden md:block text-gray-700 text-xs font-bold mr-2">Thread Filter</label>
             <div className="relative">
               <select onChange={this.handleThreadTypeChange}
                       value={this.state.threadType}
@@ -253,15 +253,15 @@ export class App extends React.Component<{}, AppState> {
       if (this.state.searching) {
         content = <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
       } else {
-        content = <div className="flex-1 flex flex-col overflow-hidden">
+        content = <div className="flex-1 px-6 py-4">
           <p>Search r/churning using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>. For more advanced searches you can directly query the API <a className={linkClass} href="https://api.pushshift.io/reddit/comment/search?distinguished=admin&q=howdy&subreddit=!ModSupport">fairly easily</a>.</p>
         </div>
       }
     }
     // Combine everything and return
     return (
-      <div className="h-screen flex">
-        <form onSubmit={this.searchSubmit} className="w-1/4 px-6 py-4 bg-blue-200">
+      <div className="md:h-screen md:flex">
+        <form onSubmit={this.searchSubmit} className="md:w-1/4 px-6 py-4 bg-blue-200">
           <div>
             <h1 className="text-2xl">Churning Search</h1>
           </div>
@@ -353,7 +353,7 @@ export class App extends React.Component<{}, AppState> {
             </div>
           }
         </form>
-        {content}
+		{content}
       </div>
     );
   }
