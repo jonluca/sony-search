@@ -14,19 +14,19 @@ export class PushshiftAPI {
     let args = {
       html_decode: "true",
       subreddit: "churning",
-      size: "500"
+      size: "500",
+	  user_removed: "false",
+	  mod_removed: "false",
+	  filter: "permalink,link_id,id,body,author,score,created_utc"
     };
-    if (settings.after) {
-      args["after"] = settings.after;
-    }
-    if (settings.author) {
-      args["author"] = settings.author;
-    }
-    if (settings.query) {
+	if (settings.query) {
       args["q"] = settings.query;
     }
-    if (settings.filter) {
-      args["score"] = settings.filter;
+    if (settings.author) {
+      args["author"] = `![deleted],${settings.author}`;
+    }
+	if (settings.after) {
+      args["after"] = settings.after;
     }
     if (settings.sort) {
       args["sort"] = settings.sort;
@@ -34,17 +34,18 @@ export class PushshiftAPI {
     if (settings.sortType) {
       args["sort_type"] = settings.sortType;
     }
+	if (settings.filter) {
+      args["score"] = settings.filter;
+    }
     let joinedArgs = Object.entries(args).map(([k, v]) => `${k}=${v}`).join('&');
     return `https://api.pushshift.io/reddit/comment/search?${joinedArgs}`
   }
 
   async query(url: string): Promise<any> {
-    console.log(`Pushshift request ${url}`);
     let resp = await fetch(url, {
       referrerPolicy: "no-referrer"
     });
     let data = await resp.json();
-
     for (let i = 0, len = data.data.length; i < len; i++) {
       let permalink = data.data[i].permalink;
       switch (true) {
@@ -79,7 +80,6 @@ export class PushshiftAPI {
           data.data[i].thread = "";
       }
     }
-
     return data;
   }
 }

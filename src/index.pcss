@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+	min-width: 320px;
+}
+
+.facet button.only {
+	visibility: hidden;
+}
+.facet:hover button.only,
+.facet:focus button.only {
+	visibility: visible;
+}
+
 .loader {
   border-top-color: #3498db;
   -webkit-animation: spinner 1.5s linear infinite;

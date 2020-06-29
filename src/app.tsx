@@ -120,6 +120,22 @@ export class App extends React.Component<{}, AppState> {
 	this.setState({ threadType: threadType });
   }
 
+  handleThreadsOnly = (thread) => {
+	let threadType = this.state.threadType;
+	for (const key in threadType) {
+	  threadType[key] = (key === thread)
+	}
+	this.setState({ threadType: threadType });
+  }
+
+  handleThreadsAll = () => {
+	let threadType = this.state.threadType;
+  	for (const key in threadType) {
+  	  threadType[key] = true
+  	}
+  	this.setState({ threadType: threadType });
+  }
+
   doSearch = async () => {
     this.setState({ threadType: {}, error: null, comments: null, posts: null, searching: true });
     this.lastSearch = { ...this.state };
@@ -183,13 +199,16 @@ export class App extends React.Component<{}, AppState> {
       let threadsOptions = Object.entries(this.state.threadType)
 	  let threadsFilter = threadsOptions.map(([key, value], i) => {
   	    return (
-		  <li key={i}>
-	        <label className="block text-black cursor-pointer relative pl-6">
+		  <li className="facet"
+		      key={i}>
+	        <label className="inline-block text-black cursor-pointer relative pl-6">
 			  <span className="absolute left-0 inset-y-0 flex items-center">
 			  	<input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} />
 			  </span>
       	      <span className="text-sm leading-4">{key}</span>
             </label>
+			<button className="only cursor-pointer text-xs text-blue-600 no-underline hover:underline ml-3 hidden lg:inline-block"
+			        onClick={() => this.handleThreadsOnly(key)}>only</button>
 	      </li>
 		)
       });
@@ -223,7 +242,7 @@ export class App extends React.Component<{}, AppState> {
         }
 
         return <div className="w-full rounded bg-gray-200 shadow p-4 mt-2 overflow-hidden" key={comment.id}>
-          <a href={`https://reddit.com${permalink}`} target="_blank">
+          <a href={`https://reddit.com${permalink}`} className="block" target="_blank">
             <ReactMarkdown source={comment.body}
 			               allowedTypes={[ 'text', 'strong', 'delete', 'emphasis', 'list', 'listItem' ]}
 						   unwrapDisallowed />
@@ -251,7 +270,13 @@ export class App extends React.Component<{}, AppState> {
         </div>
       });
 	  facets = <div className="mt-8">
-		<label className="hidden md:block text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
+	    <div className="flex">
+		  <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
+		  <button className="ml-auto cursor-pointer text-xs text-blue-600 no-underline hover:underline focus:outline-none hidden lg:block"
+		          onClick={this.handleThreadsAll}>
+		    Select All
+		  </button>
+		</div>
 		<ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
 		  {threadsFilter}
 		</ul>
@@ -281,7 +306,7 @@ export class App extends React.Component<{}, AppState> {
     // Combine everything and return
     return (
       <div className="md:h-screen md:flex">
-	    <div className="md:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll">
+	    <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll">
 	        <form onSubmit={this.searchSubmit}>
 	          <div>
 	            <h1 className="text-2xl">Churning Search</h1>
