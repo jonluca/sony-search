@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { PushshiftAPI, SearchSettings } from './api';
 import ta from 'time-ago';
 import ReactMarkdown from "react-markdown";
+
+import { PushshiftAPI, SearchSettings } from './api';
+import { SearchHelp } from './help';
 
 interface AppState extends SearchSettings {
   error: string,
@@ -303,8 +305,11 @@ export class App extends React.Component<{}, AppState> {
       if (this.state.searching) {
         content = <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
       } else {
-        content = <div className="flex-1 px-6 py-4">
-          <p>Search r/churning using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>. For more advanced searches you can directly query the API <a className={linkClass} href="https://api.pushshift.io/reddit/comment/search?distinguished=admin&q=howdy&subreddit=!ModSupport">fairly easily</a>.</p>
+        content = <div className="flex-1 px-6 py-4 overflow-y-scroll">
+          <div>
+		  	<p className="text-center">Search r/churning using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>.</p>
+		  </div>
+		  <SearchHelp />
         </div>
       }
     }
