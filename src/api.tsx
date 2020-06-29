@@ -23,7 +23,7 @@ export class PushshiftAPI {
       args["q"] = settings.query;
     }
     if (settings.author) {
-      args["author"] = `![deleted],${settings.author}`;
+      args["author"] = settings.author;
     }
 	if (settings.after) {
       args["after"] = settings.after;

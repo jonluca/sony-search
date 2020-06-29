@@ -269,13 +269,18 @@ export class App extends React.Component<{}, AppState> {
           </div>
         </div>
       });
-	  facets = <div className="mt-8">
-	    <div className="flex">
-		  <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
-		  <button className="ml-auto cursor-pointer text-xs text-blue-600 no-underline hover:underline focus:outline-none hidden lg:block"
+	  let allChecked = Object.values(this.state.threadType).every(v => v);
+	  let selectAll;
+	  if (!allChecked) {
+		  selectAll = <button className="ml-auto cursor-pointer text-xs text-blue-600 no-underline hover:underline focus:outline-none hidden lg:block"
 		          onClick={this.handleThreadsAll}>
 		    Select All
 		  </button>
+	  }
+	  facets = <div className="mt-8">
+	    <div className="flex">
+		  <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
+		  {selectAll}
 		</div>
 		<ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
 		  {threadsFilter}
