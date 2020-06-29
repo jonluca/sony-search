@@ -1,6 +1,6 @@
 {
   "name": "churning-search",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Churning subreddit search using the Pushshift API",
   "repository": "https://github.com/garettg/churning-search.git",
   "homepage": "https://garettg.github.io/churning-search",
@@ -25,6 +25,7 @@
     "parcel-plugin-inliner": "^1.0.14",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+	"react-ga": "^3.0.0",
 	"react-markdown": "^4.3.1",
     "react-spinners": "^0.9.0",
     "time-ago": "^0.2.1"

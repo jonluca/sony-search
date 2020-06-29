@@ -5,6 +5,12 @@ import ReactMarkdown from "react-markdown";
 import { PushshiftAPI, SearchSettings } from './api';
 import { SearchHelp } from './help';
 
+import ReactGA from 'react-ga';
+ReactGA.initialize('UA-171174933-1', {
+	titleCase: false
+});
+ReactGA.pageview(window.location.pathname);
+
 interface AppState extends SearchSettings {
   error: string,
   errorTime: Date,
@@ -119,6 +125,11 @@ export class App extends React.Component<{}, AppState> {
   handleThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 	let threadType = this.state.threadType;
 	threadType[e.target.value] = e.target.checked
+	ReactGA.event({
+  	  category: 'Filter',
+  	  action: e.target.value,
+      label: (e.target.checked ? 'Show':'Hide')
+	});
 	this.setState({ threadType: threadType });
   }
 
@@ -127,6 +138,11 @@ export class App extends React.Component<{}, AppState> {
 	for (const key in threadType) {
 	  threadType[key] = (key === thread)
 	}
+	ReactGA.event({
+  	  category: 'Filter',
+  	  action: thread,
+      label: 'Only'
+	});
 	this.setState({ threadType: threadType });
   }
 
@@ -135,6 +151,11 @@ export class App extends React.Component<{}, AppState> {
   	for (const key in threadType) {
   	  threadType[key] = true
   	}
+	ReactGA.event({
+  	  category: 'Filter',
+  	  action: 'All',
+      label: 'Show'
+	});
   	this.setState({ threadType: threadType });
   }
 
@@ -171,6 +192,13 @@ export class App extends React.Component<{}, AppState> {
 			return [thread, true];
 		})
 	  );
+	  for (const [key, value] of Object.entries(toSave)) {
+		  ReactGA.event({
+    		category: 'Search',
+    		action: key,
+    		label: value
+  		  });
+	  }
       // Update state with results
       this.setState({ comments: data.data, threadType: threadOptions, searching: false });
     } catch (err) {
@@ -279,15 +307,17 @@ export class App extends React.Component<{}, AppState> {
 		    Select All
 		  </button>
 	  }
-	  facets = <div className="mt-8">
-	    <div className="flex">
-		  <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
-		  {selectAll}
-		</div>
-		<ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
-		  {threadsFilter}
-		</ul>
-	  </div>
+	  if (Object.keys(this.state.threadType).length > 1) {
+		  facets = <div className="mt-8">
+		    <div className="flex">
+			  <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
+			  {selectAll}
+			</div>
+			<ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
+			  {threadsFilter}
+			</ul>
+		  </div>
+	  }
       content = <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b flex px-6 py-2 items-center flex-none">
           <span className="font-bold">
