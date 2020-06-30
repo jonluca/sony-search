@@ -193,11 +193,14 @@ export class App extends React.Component<{}, AppState> {
 		})
 	  );
 	  for (const [key, value] of Object.entries(toSave)) {
+	    if (value !== "") {
 		  ReactGA.event({
-    		category: 'Search',
-    		action: key,
-    		label: value
-  		  });
+		    category: 'Search',
+			action: key,
+			label: value
+		  });
+        }
+
 	  }
       // Update state with results
       this.setState({ comments: data.data, threadType: threadOptions, searching: false });
