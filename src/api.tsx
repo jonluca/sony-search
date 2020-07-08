@@ -70,6 +70,9 @@ export class PushshiftAPI {
         case /frustration_friday_/.test(permalink):
           data.data[i].thread = "Frustration Friday";
           break;
+		case /mods_choice_/.test(permalink):
+          data.data[i].thread = "Mod's Choice";
+          break;
         case /weekly_offtopic_thread_week_/.test(permalink):
           data.data[i].thread = "Off Topic";
           break;
