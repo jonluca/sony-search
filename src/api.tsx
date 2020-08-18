@@ -14,7 +14,7 @@ export class PushshiftAPI {
     let args = {
       html_decode: "true",
       subreddit: "churning",
-      size: "500",
+      size: 100, // API limit
 	  user_removed: "false",
 	  mod_removed: "false",
 	  filter: "permalink,link_id,id,body,author,score,created_utc"
