@@ -7,6 +7,16 @@ module.exports = {
 			'./src/*.jsx',
 			'./src/*.vue',
 		],
+		options: {
+			whitelist: [
+				'opacity-50',
+				'cursor-not-allowed',
+				'hover:bg-blue-700',
+				'grid',
+				'hidden',
+				'block',
+			],
+		},
   	},
 	future: {
     	removeDeprecatedGapUtilities: true,

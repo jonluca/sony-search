@@ -4,6 +4,8 @@ export interface SearchSettings {
   query: string,
   author: string,
   after: string,
+  start: string,
+  end: string,
   sort: string,
   sortType: string,
   filter: string
@@ -25,8 +27,13 @@ export class PushshiftAPI {
     if (settings.author) {
       args["author"] = settings.author;
     }
-	if (settings.after) {
+	if (settings.after !== "") {
       args["after"] = settings.after;
+    } else {
+	  let startTime = settings.start + " 00:00:00";
+	  args["after"] = parseInt((new Date(startTime).getTime() / 1000).toFixed(0));
+	  let endTime = settings.end + " 23:59:59";
+	  args["before"] = parseInt((new Date(endTime).getTime() / 1000).toFixed(0));
     }
     if (settings.sort) {
       args["sort"] = settings.sort;

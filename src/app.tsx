@@ -1,6 +1,7 @@
 import * as React from 'react';
 import ta from 'time-ago';
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown from 'react-markdown';
+import {isValid, parse} from 'date-fns';
 
 import { PushshiftAPI, SearchSettings } from './api';
 import { SearchHelp } from './help';
@@ -18,6 +19,8 @@ interface AppState extends SearchSettings {
   comments: Array<any>,
   posts: Array<any>,
   lastUrl: string,
+  errorStart: boolean,
+  errorEnd: boolean,
 }
 
 /** Main class for Reddit Search */
@@ -32,12 +35,16 @@ export class App extends React.Component<{}, AppState> {
       query: "",
       author: "",
       after: "7d",
+	  start: "",
+	  end: "",
       sortType: "created_utc",
       sort: "desc",
       filter: "",
       threadType: {},
       error: null,
       errorTime: null,
+	  errorStart: false,
+	  errorEnd: false,
       searching: false,
       comments: null,
       lastUrl: "",
@@ -87,11 +94,17 @@ export class App extends React.Component<{}, AppState> {
       query: this.state.query,
       author: this.state.author,
       after: this.state.after,
+	  start: this.state.start,
+	  end: this.state.end,
       sortType: this.state.sortType,
       sort: this.state.sort,
       filter: this.state.filter
     };
     localStorage.setItem("search-form", JSON.stringify(toSave));
+  }
+
+  isDateValid = (date: string) => {
+	  return isValid(parse(date, "M/d/y", new Date()));
   }
 
   setError = (error: string) => {
@@ -108,6 +121,30 @@ export class App extends React.Component<{}, AppState> {
 
   handleAfterDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({ after: e.target.value });
+  }
+
+  handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	let tempState = {start: e.target.value};
+  	if (this.state.errorStart && this.isDateValid(e.target.value)) {
+      tempState.errorStart = false;
+    }
+  	this.setState(tempState);
+  }
+
+  handleEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let tempState = {end: e.target.value};
+	if (this.state.errorEnd && this.isDateValid(e.target.value)) {
+  	  tempState.errorEnd = false;
+  	}
+	this.setState(tempState);
+  }
+
+  validateStartDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ errorStart: !this.isDateValid(e.target.value) });
+  }
+
+  validateEndDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ errorEnd: !this.isDateValid(e.target.value) });
   }
 
   handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -168,6 +205,8 @@ export class App extends React.Component<{}, AppState> {
       query: this.state.query,
       author: this.state.author,
       after: this.state.after,
+	  start: this.state.start,
+	  end: this.state.end,
       sortType: this.state.sortType,
       sort: this.state.sort,
       filter: this.state.filter
@@ -383,13 +422,33 @@ export class App extends React.Component<{}, AppState> {
 	                <option value="182d">6 Months</option>
 	                <option value="1y">1 Year</option>
 					<option value="2y">2 Years</option>
-	                <option value="">Any</option>
+	                <option value="">Custom</option>
 	              </select>
 	              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
 	                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
 	              </div>
 	            </div>
 	          </div>
+			  <div className={"mt-2 " + (this.state.after === "" ? 'grid':'hidden') + " grid-cols-2 gap-4"}>
+			  	<div className="col-span-1">
+				  <label className="block text-gray-700 text-xs font-bold mb-1">Start Date</label>
+				  <input onChange={this.handleStartChange}
+				         onBlur={this.validateStartDate}
+  	                     value={this.state.start}
+  	                     className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+						 placeholder="MM/DD/YYYY" />
+                  <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorStart ? 'block':'hidden')}>Enter a valid date</p>
+				</div>
+				<div className="col-span-1">
+				  <label className="block text-gray-700 text-xs font-bold mb-1">End Date</label>
+				  <input onChange={this.handleEndChange}
+                         onBlur={this.validateEndDate}
+						 value={this.state.end}
+					     className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+						 placeholder="MM/DD/YYYY" />
+                  <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorEnd ? 'block':'hidden')}>Enter a valid date</p>
+				</div>
+			  </div>
 	          {/* Sort By */}
 	          <div className="mt-2">
 	            <label className="block text-gray-700 text-xs font-bold mb-1">Sort By</label>
@@ -430,8 +489,8 @@ export class App extends React.Component<{}, AppState> {
 	          </div>
 	          {/* Submit Button and Error text */}
 	          <button type="submit"
-	                  disabled={this.state.searching}
-	                  className="w-full rounded bg-blue-900 hover:bg-blue-700 text-white font-bold mt-4 py-2">
+	                  disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
+	                  className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed':'hover:bg-blue-700')}>
 	            {this.state.searching ? "Searching..." : "Search"}
 	          </button>
 	          {this.state.error &&
