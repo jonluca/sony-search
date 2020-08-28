@@ -124,6 +124,8 @@ export class App extends React.Component<{}, AppState> {
 	if (e.target.value !== "") {
 		tempState.errorStart = false;
 		tempState.errorEnd = false;
+		tempState.start = "";
+		tempState.end = "";
 	}
 	this.setState(tempState);
   }
@@ -440,7 +442,7 @@ export class App extends React.Component<{}, AppState> {
 				  <input onChange={this.handleStartChange}
 				         onBlur={this.validateStartDate}
   	                     value={this.state.start}
-  	                     className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+  	                     className={"block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorStart ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
 						 placeholder="MM/DD/YYYY" />
                   <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorStart ? 'block':'hidden')}>Enter a valid date</p>
 				</div>
@@ -449,7 +451,7 @@ export class App extends React.Component<{}, AppState> {
 				  <input onChange={this.handleEndChange}
                          onBlur={this.validateEndDate}
 						 value={this.state.end}
-					     className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+					     className={"block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorEnd ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
 						 placeholder="MM/DD/YYYY" />
                   <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorEnd ? 'block':'hidden')}>Enter a valid date</p>
 				</div>

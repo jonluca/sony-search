@@ -12,6 +12,7 @@ module.exports = {
 				'opacity-50',
 				'cursor-not-allowed',
 				'hover:bg-blue-700',
+				'border-red-500',
 				'grid',
 				'hidden',
 				'block',
