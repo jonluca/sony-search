@@ -120,7 +120,12 @@ export class App extends React.Component<{}, AppState> {
   }
 
   handleAfterDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({ after: e.target.value });
+    let tempState = { after: e.target.value };
+	if (e.target.value !== "") {
+		tempState.errorStart = false;
+		tempState.errorEnd = false;
+	}
+	this.setState(tempState);
   }
 
   handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
