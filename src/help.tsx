@@ -70,7 +70,7 @@ export class SearchHelp extends React.Component {
 			  <tr>
 				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Time Range</td>
 				<td className="border px-4 py-2 align-top">
-				  <p>Select a time range from the dropdown. Options include 1 day, 1 week, 1 month, 3 months, 6 months, 1 year, 2 year, and any for at any time.</p>
+				  <p>Select a time range from the dropdown. Options include 1 day, 1 week, 1 month, 3 months, 6 months, 1 year, 2 year, and custom new options to appear to select a start and end date. Start and End dates should be in MM/DD/YYYY format.</p>
 				</td>
 			  </tr>
 			  <tr>
