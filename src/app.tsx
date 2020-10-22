@@ -241,12 +241,24 @@ export class App extends React.Component<{}, AppState> {
 	  for (const [key, value] of Object.entries(toSave)) {
 	    if (value !== "") {
 		  ReactGA.event({
+			nonInteraction: true
 		    category: 'Search',
 			action: key,
 			label: value
 		  });
-        }
-
+	  }
+	  if (key === 'query') {
+		  const regex = /[\"\'\|\(\)*’&]|(\s\,|\,\s|\+|\s\-|\s\%\s|\s\>\s|\s\<\s|\sor\s|\sOR\s|\sand\s|\sAND\s)/gi;
+		  let keywords = value.replace(regex, ' ').replace(/\s\s+/g, ' ').trim().toLowerCase().split(" ");
+		  keywords.map(term => {
+			ReactGA.event({
+			  nonInteraction: true
+			  category: 'Search',
+		      action: 'keyword',
+			  label: term
+			});
+		  })
+	  }
 	  }
       // Update state with results
       this.setState({ comments: data.data, threadType: threadOptions, searching: false });
@@ -310,7 +322,7 @@ export class App extends React.Component<{}, AppState> {
         if (comment.permalink) {
           permalink = comment.permalink;
         } else {
-          permalink = `/comments/${comment.link_id.split('_')[1]}/_/${comment.id}`
+          permalink = `/comments/${comment.link_id.split('_')[1]}/_/${comment.id}/`
         }
 
         let threadBadge;
@@ -321,7 +333,7 @@ export class App extends React.Component<{}, AppState> {
         }
 
         return <div className="w-full rounded bg-gray-200 shadow p-4 mt-2 overflow-hidden" key={comment.id}>
-          <a href={`https://reddit.com${permalink}`} className="block" target="_blank">
+          <a href={`https://reddit.com${permalink}?context=1`} className="block" target="_blank">
             <ReactMarkdown source={comment.body}
 			               allowedTypes={[ 'text', 'strong', 'delete', 'emphasis', 'list', 'listItem' ]}
 						   unwrapDisallowed />
