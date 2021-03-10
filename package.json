@@ -1,6 +1,6 @@
 {
   "name": "churning-search",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Churning subreddit search using the Pushshift API",
   "repository": "https://github.com/garettg/churning-search.git",
   "homepage": "https://garettg.github.io/churning-search",
@@ -13,22 +13,23 @@
     "dist": "rm -r ./dist && parcel build --public-url ./ src/index.html && export $(cat .env | xargs) && gh-pages --dist ./dist --repo https://$GH_TOKEN@github.com/garettg/churning-search.git"
   },
   "devDependencies": {
-    "@types/react": "^16.9.53",
-    "@types/react-dom": "^16.9.8",
+    "@types/react": "~16.14.5",
+    "@types/react-dom": "~16.9.11",
     "cssnano": "^4.1.10",
     "gh-pages": "^3.1.0",
-    "tailwindcss": "^1.9.5",
-    "typescript": "^4.0.3"
+    "tailwindcss": "~1.9.6",
+    "typescript": "~4.2.3"
   },
   "dependencies": {
-	"date-fns": "^2.16.1",
+    "date-fns": "~2.19.0",
     "parcel-bundler": "^1.12.4",
-    "parcel-plugin-inliner": "^1.0.14",
+    "parcel-plugin-inliner": "~1.0.16",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-	"react-ga": "^3.2.0",
-	"react-markdown": "^5.0.1",
-    "react-spinners": "^0.9.0",
+    "react-ga": "~3.3.0",
+    "react-markdown": "~5.0.3",
+    "react-spinners": "^0.10.6",
+    "remark-gfm": "^1.0.0",
     "time-ago": "^0.2.1"
   }
 }

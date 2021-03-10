@@ -1,14 +1,20 @@
 import * as React from 'react';
 import ta from 'time-ago';
 import ReactMarkdown from 'react-markdown';
+import gfm from 'remark-gfm';
 import {isValid, parse} from 'date-fns';
 
 import { PushshiftAPI, SearchSettings } from './api';
 import { SearchHelp } from './help';
 
+const isDevMode = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+
 import ReactGA from 'react-ga';
+
 ReactGA.initialize('UA-171174933-1', {
-	titleCase: false
+	titleCase: false,
+	debug: isDevMode,
+	testMode: isDevMode
 });
 ReactGA.pageview(window.location.pathname);
 
@@ -168,12 +174,14 @@ export class App extends React.Component<{}, AppState> {
 
   handleThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 	let threadType = this.state.threadType;
-	threadType[e.target.value] = e.target.checked
-	ReactGA.event({
-  	  category: 'Filter',
-  	  action: e.target.value,
-      label: (e.target.checked ? 'Show':'Hide')
-	});
+	threadType[e.target.value] = e.target.checked;
+	if (!isDevMode) {
+	  ReactGA.event({
+  	    category: 'Filter',
+  	    action: e.target.value,
+        label: (e.target.checked ? 'Show':'Hide')
+	  });
+	}
 	this.setState({ threadType: threadType });
   }
 
@@ -182,11 +190,13 @@ export class App extends React.Component<{}, AppState> {
 	for (const key in threadType) {
 	  threadType[key] = (key === thread)
 	}
-	ReactGA.event({
-  	  category: 'Filter',
-  	  action: thread,
-      label: 'Only'
-	});
+	if (!isDevMode) {
+	  ReactGA.event({
+        category: 'Filter',
+      	action: thread,
+        label: 'Only'
+	  });
+	}
 	this.setState({ threadType: threadType });
   }
 
@@ -195,11 +205,13 @@ export class App extends React.Component<{}, AppState> {
   	for (const key in threadType) {
   	  threadType[key] = true
   	}
-	ReactGA.event({
-  	  category: 'Filter',
-  	  action: 'All',
-      label: 'Show'
-	});
+	if (!isDevMode) {
+	  ReactGA.event({
+	  	category: 'Filter',
+	  	action: 'All',
+	    label: 'Show'
+      });
+	}
   	this.setState({ threadType: threadType });
   }
 
@@ -239,7 +251,7 @@ export class App extends React.Component<{}, AppState> {
 		})
 	  );
 	  for (const [key, value] of Object.entries(toSave)) {
-	    if (value !== "") {
+	    if (value !== "" && !isDevMode) {
 		  ReactGA.event({
 			nonInteraction: true
 		    category: 'Search',
@@ -251,17 +263,21 @@ export class App extends React.Component<{}, AppState> {
 		  const regex = /[\"\'\|\(\)*’&]|(\s\,|\,\s|\+|\s\-|\s\%\s|\s\>\s|\s\<\s|\sor\s|\sOR\s|\sand\s|\sAND\s)/gi;
 		  let keywords = value.replace(regex, ' ').replace(/\s\s+/g, ' ').trim().toLowerCase().split(" ");
 		  keywords.map(term => {
-			ReactGA.event({
-			  nonInteraction: true
-			  category: 'Search',
-		      action: 'keyword',
-			  label: term
-			});
+			if (!isDevMode) {
+			  ReactGA.event({
+				nonInteraction: true
+				category: 'Search',
+			    action: 'keyword',
+				label: term
+			  });
+			}
 		  })
 	  }
 	  }
       // Update state with results
       this.setState({ comments: data.data, threadType: threadOptions, searching: false });
+	  let resultsPanel = document.getElementById("results-panel");
+	  resultsPanel.scrollIntoView();
     } catch (err) {
       this.setState({ searching: false });
       this.setError(String(err));
@@ -275,12 +291,16 @@ export class App extends React.Component<{}, AppState> {
     this.doSearch();
   }
 
+  resetSearch = () => {
+	  hash_accessor.clear();
+	  this.setState({ lastUrl: "", threadType: {}, error: null, comments: null, posts: null, searching: false });
+  }
+
   /** Render the app
    * @return {React.ReactNode} The react node for the app
    */
   render(): React.ReactNode {
-    // Not tidy at all but it's a one page app so WONTFIX
-    let linkClass = "text-blue-400 hover:text-blue-600";
+    let linkClass = "text-blue-800 hover:text-blue-600";
     let content;
 	let facets;
     let resultCount;
@@ -290,15 +310,14 @@ export class App extends React.Component<{}, AppState> {
       let threadsOptions = Object.entries(this.state.threadType)
 	  let threadsFilter = threadsOptions.map(([key, value], i) => {
   	    return (
-		  <li className="facet"
-		      key={i}>
-	        <label className="inline-block text-black cursor-pointer relative pl-6">
+		  <li className="facet flex items-center" key={i}>
+	        <label className="inline-block text-black cursor-pointer relative pl-6 pr-2">
 			  <span className="absolute left-0 inset-y-0 flex items-center">
 			  	<input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} />
 			  </span>
-      	      <span className="text-sm leading-4">{key}</span>
+      	      <span className="text-sm">{key}</span>
             </label>
-			<button className="only cursor-pointer text-xs text-blue-600 no-underline hover:underline ml-3 hidden lg:inline-block"
+			<button className="only cursor-pointer text-xs text-blue-600 no-underline hover:underline ml-2 px-1 hidden lg:inline-block"
 			        onClick={() => this.handleThreadsOnly(key)}>only</button>
 	      </li>
 		)
@@ -327,38 +346,42 @@ export class App extends React.Component<{}, AppState> {
 
         let threadBadge;
         if (comment.thread) {
-          threadBadge = <span className="inline-block bg-blue-600 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2">
+          threadBadge = <div className="bg-blue-600 rounded-full px-3 py-1 text-xs font-semibold text-white">
             {comment.thread}
-          </span>
+          </div>
         }
 
-        return <div className="w-full rounded bg-gray-200 shadow p-4 mt-2 overflow-hidden" key={comment.id}>
-          <a href={`https://reddit.com${permalink}?context=1`} className="block" target="_blank">
-            <ReactMarkdown source={comment.body}
-			               allowedTypes={[ 'text', 'strong', 'delete', 'emphasis', 'list', 'listItem' ]}
-						   unwrapDisallowed />
-          </a>
-          <div className="md:flex mt-3">
-            <div className="inline-block md:block md:mr-auto">
-              <div className="inline-block bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2"
-                   title={new Date(comment.created_utc * 1000).toLocaleString()}>
-                {ta.ago((comment.created_utc * 1000))}
-              </div>
-              {threadBadge}
-            </div>
-            <div className="inline-block md:block">
-              <a className="inline-block bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white mr-2"
-                 target="_blank"
-                 href={`https://reddit.com/u/${comment.author}`}>
-                {comment.author}
-              </a>
-              <span className="inline-block bg-orange-600 rounded-full px-3 py-1 text-xs font-semibold text-white"
-                    title={`Score: ${comment.score}`}>
-                {comment.score}
-              </span>
-            </div>
-          </div>
-        </div>
+        return (
+			<div className="w-full rounded bg-gray-200 shadow px-6 py-4 mb-4 overflow-hidden" key={comment.id}>
+				<div className="mb-3 flex">
+					<a className={linkClass + " text-lg font-semibold"}
+						target="_blank"
+						href={`https://www.reddit.com/u/${comment.author}`}>
+						{comment.author}
+					</a>
+					<span className="ml-auto bg-orange-600 rounded-full px-3 py-1 text-xs font-semibold text-white"
+							title={`Score: ${comment.score} point${comment.score !== 1 ? 's':''}`}>
+						{comment.score}
+					</span>
+				</div>
+				<a href={`https://www.reddit.com${permalink}?context=1`} className="block text-sm leading-5" target="_blank">
+		            <ReactMarkdown source={comment.body}
+								   linkTarget="_blank"
+								   plugins={[gfm]}
+								   disallowedTypes={['link']}
+								   unwrapDisallowed />
+      			</a>
+				<div className={`mt-3 flex ${threadBadge ? "justify-between":"justify-end"}`}>
+					{threadBadge}
+					<a href={`https://www.reddit.com${permalink}?context=1`}
+					   className="bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white"
+					   target="_blank"
+					   title={new Date(comment.created_utc * 1000).toLocaleString()}>
+						{ta.ago((comment.created_utc * 1000))}
+					</a>
+				</div>
+	        </div>
+		);
       });
 	  let allChecked = Object.values(this.state.threadType).every(v => v);
 	  let selectAll;
@@ -379,24 +402,24 @@ export class App extends React.Component<{}, AppState> {
 			</ul>
 		  </div>
 	  }
-      content = <div className="flex-1 flex flex-col overflow-hidden">
+      content = <div id="results-panel" className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b flex px-6 py-2 items-center flex-none">
-          <span className="font-bold">
+          <span className="font-bold text-lg">
             Showing {filterCount < resultCount ? `${filterCount} of `: ''}{resultCount} results
 		  </span>
         </div>
         <div className="px-6 py-4 flex-1 overflow-y-scroll">
           {inner}
-          <div className="text-center py-4">
-            End of Results
+          <div className="text-center font-bold text-lg py-4">
+            {resultCount > 0 ? `End of Results`:`No Results Found`}
           </div>
         </div>
       </div>
     } else {
       if (this.state.searching) {
-        content = <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
+        content = <div id="results-panel" className="px-6 py-4 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
       } else {
-        content = <div className="flex-1 px-6 py-4 overflow-y-scroll">
+        content = <div id="results-panel" className="flex-1 px-6 py-4 overflow-y-scroll">
           <div>
 		  	<p className="text-center">Search r/churning using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>.</p>
 		  </div>
@@ -410,21 +433,23 @@ export class App extends React.Component<{}, AppState> {
 	    <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll">
 	        <form onSubmit={this.searchSubmit}>
 	          <div>
-	            <h1 className="text-2xl">Churning Search</h1>
+	            <h1 className="text-2xl">
+					<button className="w-full text-left" onClick={this.resetSearch}>Churning Search</button>
+				</h1>
 	          </div>
 	          {/* Search Term */}
 	          <div className="mt-2">
 	            <label className="block text-gray-700 text-xs font-bold mb-1">Search Term</label>
 	            <input onChange={this.handleQueryChange}
 	                   value={this.state.query}
-	                   className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
+	                   className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
 	          </div>
 	          {/* Author */}
 	          <div className="mt-2">
 	            <label className="block text-gray-700 text-xs font-bold mb-1">Author</label>
 	            <input onChange={this.handleAuthorChange}
 	                   value={this.state.author}
-	                   className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
+	                   className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
 	          </div>
 
 	          {/* Time Range */}
@@ -433,7 +458,7 @@ export class App extends React.Component<{}, AppState> {
 	            <div className="relative">
 	              <select onChange={this.handleAfterDateChange}
 	                      value={this.state.after}
-	                      className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+	                      className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
 	                <option value="1d">1 Day</option>
 	                <option value="7d">1 Week</option>
 	                <option value="31d">1 Month</option>
@@ -454,7 +479,7 @@ export class App extends React.Component<{}, AppState> {
 				  <input onChange={this.handleStartChange}
 				         onBlur={this.validateStartDate}
   	                     value={this.state.start}
-  	                     className={"block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorStart ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
+  	                     className={"text-sm block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorStart ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
 						 placeholder="MM/DD/YYYY" />
                   <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorStart ? 'block':'hidden')}>Enter a valid date</p>
 				</div>
@@ -463,53 +488,57 @@ export class App extends React.Component<{}, AppState> {
 				  <input onChange={this.handleEndChange}
                          onBlur={this.validateEndDate}
 						 value={this.state.end}
-					     className={"block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorEnd ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
+					     className={"text-sm block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorEnd ? 'border-red-500':'border-gray-200 focus:border-gray-500')}
 						 placeholder="MM/DD/YYYY" />
                   <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorEnd ? 'block':'hidden')}>Enter a valid date</p>
 				</div>
 			  </div>
-	          {/* Sort By */}
-	          <div className="mt-2">
-	            <label className="block text-gray-700 text-xs font-bold mb-1">Sort By</label>
-	            <div className="relative">
-	              <select onChange={this.handleSortByChange}
-	                      value={this.state.sortType}
-	                      className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-	                <option value="created_utc">Date</option>
-	                <option value="score">Score</option>
-	              </select>
-	              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-	                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-	              </div>
-	            </div>
-	          </div>
-	          {/* Sort Direction */}
-	          <div className="mt-2">
-	            <label className="block text-gray-700 text-xs font-bold mb-1">Sort Order</label>
-	            <div className="relative">
-	              <select onChange={this.handleSortDirectionChange}
-	                      value={this.state.sort}
-	                      className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-	                <option value="desc">{this.state.sortType === "score" ? "Highest":"Newest"}</option>
-	                <option value="asc">{this.state.sortType === "score" ? "Lowest":"Oldest"}</option>
-	              </select>
-	              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-	                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-	              </div>
-	            </div>
-	          </div>
+			  <div className="mt-2 grid grid-cols-2 gap-4">
+			  {/* Sort By */}
+			<div className="col-span-1">
+			  <label className="block text-gray-700 text-xs font-bold mb-1">Sort By</label>
+			  <div className="relative">
+				<select onChange={this.handleSortByChange}
+						value={this.state.sortType}
+						className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+				  <option value="created_utc">Date</option>
+				  <option value="score">Score</option>
+				</select>
+				<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+				  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+				</div>
+			  </div>
+			</div>
+			{/* Sort Direction */}
+			<div className="col-span-1">
+			  <label className="block text-gray-700 text-xs font-bold mb-1">Sort Order</label>
+			  <div className="relative">
+				<select onChange={this.handleSortDirectionChange}
+						value={this.state.sort}
+						className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+				  <option value="desc">{this.state.sortType === "score" ? "Highest":"Newest"}</option>
+				  <option value="asc">{this.state.sortType === "score" ? "Lowest":"Oldest"}</option>
+				</select>
+				<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+				  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+				</div>
+			  </div>
+			</div>
+			  </div>
+
+
 	          {/* Score */}
 	          <div className="mt-2">
 	            <label className="block text-gray-700 text-xs font-bold mb-1">Score Filter</label>
 	            <input onChange={this.handleFilterChange}
 	                   value={this.state.filter}
-	                   className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+	                   className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
 	                   placeholder="e.g. >10 <100 >100,<900" />
 	          </div>
 	          {/* Submit Button and Error text */}
 	          <button type="submit"
 	                  disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
-	                  className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed':'hover:bg-blue-700')}>
+	                  className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 text-lg " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed':'hover:bg-blue-700')}>
 	            {this.state.searching ? "Searching..." : "Search"}
 	          </button>
 	          {this.state.error &&
@@ -546,6 +575,9 @@ let hash_accessor = (function (window) {
     save: function (obj) {
       // use replace so that previous url does not go into history
       window.location.replace('#' + JSON.stringify(obj, (key, value) => { if (value) return value; }));
-    }
+    },
+	clear: function () {
+	  window.location.replace('');
+	}
   };
 })(window);

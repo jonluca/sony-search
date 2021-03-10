@@ -56,35 +56,35 @@ export class PushshiftAPI {
     for (let i = 0, len = data.data.length; i < len; i++) {
       let permalink = data.data[i].permalink;
       switch (true) {
-        case /bank_account_bonus_week_/.test(permalink):
+        case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
           data.data[i].thread = "Bank Account Bonus";
           break;
-        case /(question_thread_|newbie_question_)/.test(permalink):
+        case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
           data.data[i].thread = "Daily Question";
           break;
-        case /discussion_thread_/.test(permalink):
+        case /(discussion_thread_|daily_discussion_)/.test(permalink):
           data.data[i].thread = "Daily Discussion";
           break;
-        case /manufactured_spending_weekly_thread_/.test(permalink):
+        case /manufactured_spending_weekly_/.test(permalink):
           data.data[i].thread = "Manufactured Spend";
           break;
-        case /data_points_central_thread_/.test(permalink):
+        case /(data_points_central_|data_points_weekly_)/.test(permalink):
           data.data[i].thread = "Data Points";
           break;
-        case /what_card_should_i_/.test(permalink):
+        case /what_card_should_i_get_/.test(permalink):
           data.data[i].thread = "What Card Should I Get";
           break;
         case /frustration_friday_/.test(permalink):
-          data.data[i].thread = "Frustration Friday";
+          data.data[i].thread = "Frustration";
           break;
 		case /mods_choice_/.test(permalink):
           data.data[i].thread = "Mod's Choice";
           break;
-        case /weekly_offtopic_thread_week_/.test(permalink):
+        case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
           data.data[i].thread = "Off Topic";
           break;
         case /(trip_reports_and_churning_success_stories_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
-          data.data[i].thread = "Trip Report/Storytime";
+          data.data[i].thread = "Trip Report/Success";
           break;
         default:
           data.data[i].thread = "";
