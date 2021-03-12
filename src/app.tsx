@@ -215,6 +215,41 @@ export class App extends React.Component<{}, AppState> {
   	this.setState({ threadType: threadType });
   }
 
+  handleOutboundClick = (event) => {
+	  if (!isDevMode) {
+		ReactGA.event({
+		  category: 'Outbound',
+		  action: 'Click',
+		  label: event.target.href
+		});
+	  }
+  }
+
+  handleResultClick = (event, comment) => {
+	  if (!isDevMode) {
+		ReactGA.event({
+		  category: 'Result',
+		  action: 'Thread',
+		  label: comment.thread
+		});
+		ReactGA.event({
+		  category: 'Result',
+		  action: 'Author',
+		  label: comment.author
+		});
+	}
+  }
+
+  handleAuthorClick = (event, comment) => {
+	  if (!isDevMode) {
+		ReactGA.event({
+		  category: 'Author',
+		  action: 'Click',
+		  label: comment.author
+		});
+	}
+  }
+
   doSearch = async () => {
     this.setState({ threadType: {}, error: null, comments: null, posts: null, searching: true });
     this.lastSearch = { ...this.state };
@@ -306,6 +341,17 @@ export class App extends React.Component<{}, AppState> {
     let resultCount;
     let filterCount;
     let inner;
+
+	const infoText = <>
+		<p>Maintained by <a href="https://www.reddit.com/user/garettg/"
+						 className={linkClass + " no-underline hover:underline"}
+						 target="_blank"
+						 onClick={(e) => this.handleOutboundClick(e)}>garettg</a></p>
+		<p><a href="https://www.reddit.com/message/compose/?to=garettg&subject=Churning+Search"
+			  target="_blank"
+			  className={linkClass + " no-underline hover:underline"}
+			  onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a>.</p>
+	</>;
     if (this.state.comments) {
       let threadsOptions = Object.entries(this.state.threadType)
 	  let threadsFilter = threadsOptions.map(([key, value], i) => {
@@ -343,6 +389,7 @@ export class App extends React.Component<{}, AppState> {
         } else {
           permalink = `/comments/${comment.link_id.split('_')[1]}/_/${comment.id}/`
         }
+		let commentLink = `https://www.reddit.com${permalink}?context=1`;
 
         let threadBadge;
         if (comment.thread) {
@@ -353,9 +400,10 @@ export class App extends React.Component<{}, AppState> {
 
         return (
 			<div className="w-full rounded bg-gray-200 shadow px-6 py-4 mb-4 overflow-hidden" key={comment.id}>
-				<div className="mb-3 flex">
+				<div className="flex">
 					<a className={linkClass + " text-lg font-semibold"}
 						target="_blank"
+						onClick={(e) => this.handleAuthorClick(e, comment)}
 						href={`https://www.reddit.com/u/${comment.author}`}>
 						{comment.author}
 					</a>
@@ -364,21 +412,21 @@ export class App extends React.Component<{}, AppState> {
 						{comment.score}
 					</span>
 				</div>
-				<a href={`https://www.reddit.com${permalink}?context=1`} className="block text-sm leading-5" target="_blank">
+				<a href={commentLink}
+				   onClick={(e) => this.handleResultClick(e, comment)}
+				   className="block text-sm leading-5 py-3" target="_blank">
 		            <ReactMarkdown source={comment.body}
 								   linkTarget="_blank"
 								   plugins={[gfm]}
 								   disallowedTypes={['link']}
 								   unwrapDisallowed />
       			</a>
-				<div className={`mt-3 flex ${threadBadge ? "justify-between":"justify-end"}`}>
+				<div className={`flex ${threadBadge ? "justify-between":"justify-end"}`}>
 					{threadBadge}
-					<a href={`https://www.reddit.com${permalink}?context=1`}
-					   className="bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white"
-					   target="_blank"
-					   title={new Date(comment.created_utc * 1000).toLocaleString()}>
+					<span className="bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white"
+					      title={new Date(comment.created_utc * 1000).toLocaleString()}>
 						{ta.ago((comment.created_utc * 1000))}
-					</a>
+					</span>
 				</div>
 	        </div>
 		);
@@ -417,11 +465,11 @@ export class App extends React.Component<{}, AppState> {
       </div>
     } else {
       if (this.state.searching) {
-        content = <div id="results-panel" className="px-6 py-4 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
+        content = <div id="results-panel" className="px-6 py-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
       } else {
         content = <div id="results-panel" className="flex-1 px-6 py-4 overflow-y-scroll">
           <div>
-		  	<p className="text-center">Search r/churning using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>.</p>
+		  	<p className="text-center">Search r/churning using the <a className={linkClass} href="https://pushshift.io/" onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>.</p>
 		  </div>
 		  <SearchHelp />
         </div>
@@ -430,7 +478,8 @@ export class App extends React.Component<{}, AppState> {
     // Combine everything and return
     return (
       <div className="md:h-screen md:flex">
-	    <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll">
+	    <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll md:flex md:flex-col">
+			<div>
 	        <form onSubmit={this.searchSubmit}>
 	          <div>
 	            <h1 className="text-2xl">
@@ -551,8 +600,15 @@ export class App extends React.Component<{}, AppState> {
 	          }
 	        </form>
 			{facets}
+			</div>
+			<div className="hidden md:block mt-auto text-xs">
+				{infoText}
+			</div>
 		</div>
 		{content}
+		<div className="block md:hidden mt-3 text-xs px-6 py-4">
+		  {infoText}
+		</div>
       </div>
     );
   }

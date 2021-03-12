@@ -83,7 +83,7 @@ export class PushshiftAPI {
         case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
           data.data[i].thread = "Off Topic";
           break;
-        case /(trip_reports_and_churning_success_stories_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
+        case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
           data.data[i].thread = "Trip Report/Success";
           break;
         default:
