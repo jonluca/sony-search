@@ -3,13 +3,12 @@ import ta from 'time-ago';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 import { isValid, parse } from 'date-fns';
+import ReactGA from 'react-ga';
 
 import { PushshiftAPI, SearchSettings } from './api';
 import { SearchHelp } from './help';
 
-const isDevMode = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
-
-import ReactGA from 'react-ga';
+const isDevMode = (location.hostname !== "garettg.github.io");
 
 ReactGA.initialize('UA-171174933-1', {
     titleCase: false,
@@ -288,8 +287,8 @@ export class App extends React.Component<{}, AppState> {
             for (const [key, value] of Object.entries(toSave)) {
                 if (value !== "" && !isDevMode) {
                     ReactGA.event({
-                        nonInteraction: true
-		    category: 'Search',
+                        nonInteraction: true,
+		    			category: 'Search',
                         action: key,
                         label: value
                     });
@@ -316,6 +315,12 @@ export class App extends React.Component<{}, AppState> {
         } catch (err) {
             this.setState({ searching: false });
             this.setError(String(err));
+			if (!isDevMode) {
+				ReactGA.exception({
+					description: String(err),
+					fatal: true
+				})
+			}
         }
     }
 
@@ -326,11 +331,15 @@ export class App extends React.Component<{}, AppState> {
         this.doSearch();
     }
 
+    clearResults = () => {
+        this.setState({ threadType: {}, error: null, comments: null, posts: null, searching: false });
+    }
+
     /** Render the app
      * @return {React.ReactNode} The react node for the app
      */
     render(): React.ReactNode {
-        let linkClass = "text-blue-800 hover:text-blue-600";
+        let linkClass = "text-blue-700 hover:text-blue-500 hover:underline";
         let content;
         let facets;
         let resultCount;
@@ -345,20 +354,20 @@ export class App extends React.Component<{}, AppState> {
             <p><a href="https://www.reddit.com/message/compose/?to=garettg&subject=Churning+Search"
                 target="_blank"
                 className={linkClass + " no-underline hover:underline"}
-                onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a>.</p>
+                onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a></p>
         </>;
         if (this.state.comments) {
             let threadsOptions = Object.entries(this.state.threadType)
             let threadsFilter = threadsOptions.map(([key, value], i) => {
                 return (
                     <li className="facet flex items-center" key={i}>
-                        <label className="inline-block text-black cursor-pointer relative pl-6 pr-2">
+                        <label className="inline-block text-black cursor-pointer relative pl-6 pr-1">
                             <span className="absolute left-0 inset-y-0 flex items-center">
                                 <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} />
                             </span>
                             <span className="text-sm">{key}</span>
                         </label>
-                        <button className="only cursor-pointer text-xs text-blue-600 no-underline hover:underline ml-2 px-1 hidden lg:inline-block"
+                        <button className={"only cursor-pointer text-xs ml-2 px-1 hidden lg:inline-block " + linkClass}
                             onClick={() => this.handleThreadsOnly(key)}>only</button>
                     </li>
                 )
@@ -378,38 +387,36 @@ export class App extends React.Component<{}, AppState> {
                 if (!comment) {
                     return;
                 }
+
                 let permalink;
                 if (comment.permalink) {
                     permalink = comment.permalink;
                 } else {
                     permalink = `/comments/${comment.link_id.split('_')[1]}/_/${comment.id}/`
                 }
-                let commentLink = `https://www.reddit.com${permalink}?context=1`;
 
                 let threadBadge;
                 if (comment.thread) {
-                    threadBadge = <div className="bg-blue-600 rounded-full px-3 py-1 text-xs font-semibold text-white">
-                        {comment.thread}
-                    </div>
+                    threadBadge = <div className="bg-blue-600 rounded-full px-3 py-1 text-xs text-white">{comment.thread}</div>;
                 }
 
                 return (
-                    <div className="w-full rounded bg-gray-200 shadow px-6 py-4 mb-4 overflow-hidden" key={comment.id}>
-                        <div className="flex">
-                            <a className={linkClass + " text-lg font-semibold"}
+                    <div className="w-full rounded bg-gray-200 shadow px-6 py-4 mb-6 overflow-hidden" key={comment.id}>
+                        <div className="flex justify-between items-start">
+                            <a className={linkClass + " text-lg font-semibold leading-5"}
                                 target="_blank"
                                 onClick={(e) => this.handleAuthorClick(e, comment)}
                                 href={`https://www.reddit.com/u/${comment.author}`}>
                                 {comment.author}
                             </a>
-                            <span className="ml-auto bg-orange-600 rounded-full px-3 py-1 text-xs font-semibold text-white"
+                            <span className="bg-orange-600 rounded-full px-3 py-1 text-xs text-white"
                                 title={`Score: ${comment.score} point${comment.score !== 1 ? 's' : ''}`}>
                                 {comment.score}
                             </span>
                         </div>
-                        <a href={commentLink}
+                        <a href={`https://www.reddit.com${permalink}?context=1`}
                             onClick={(e) => this.handleResultClick(e, comment)}
-                            className="block text-sm leading-5 py-3" target="_blank">
+                            className="block text-sm leading-5 py-4" target="_blank">
                             <ReactMarkdown source={comment.body}
                                 linkTarget="_blank"
                                 plugins={[gfm]}
@@ -418,7 +425,7 @@ export class App extends React.Component<{}, AppState> {
                         </a>
                         <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
                             {threadBadge}
-                            <span className="bg-blue-900 rounded-full px-3 py-1 text-xs font-semibold text-white"
+                            <span className="bg-blue-900 rounded-full px-3 py-1 text-xs text-white"
                                 title={new Date(comment.created_utc * 1000).toLocaleString()}>
                                 {ta.ago((comment.created_utc * 1000))}
                             </span>
@@ -430,7 +437,7 @@ export class App extends React.Component<{}, AppState> {
             let selectAll;
             if (!allChecked) {
                 selectAll =
-					<button className="ml-auto cursor-pointer text-xs text-blue-600 no-underline hover:underline focus:outline-none hidden lg:block"
+					<button className={"text-xs focus:outline-none hidden lg:block " + linkClass}
                     		onClick={this.handleThreadsAll}>
                     	Select All
 		  			</button>;
@@ -438,7 +445,7 @@ export class App extends React.Component<{}, AppState> {
             if (Object.keys(this.state.threadType).length > 1) {
                 facets =
 					<div className="mt-8">
-	                    <div className="flex">
+	                    <div className="flex justify-between items-center">
 	                        <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
 	                        {selectAll}
 	                    </div>
@@ -449,8 +456,16 @@ export class App extends React.Component<{}, AppState> {
             }
             content =
 				<div id="results-panel" className="flex-1 flex flex-col overflow-hidden">
-                	<div className="border-b flex px-6 py-2 items-center flex-none">
+                	<div className="border-b flex flex justify-between items-center px-6 py-2">
                     	<span className="font-bold text-lg">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
+                        <button className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
+                                title="Clear Results"
+                                onClick={this.clearResults}>
+                            <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span>Clear</span>
+                        </button>
                 	</div>
                 	<div className="px-6 py-4 flex-1 overflow-y-scroll">
                     	{inner}
@@ -466,7 +481,11 @@ export class App extends React.Component<{}, AppState> {
                 content =
 					<div id="results-panel" className="flex-1 px-6 py-4 overflow-y-scroll">
 	                    <div>
-	                        <p className="text-center">Search r/churning using the <a className={linkClass} href="https://pushshift.io/" onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>.</p>
+	                        <p className="text-center">
+                                Search <a href="https://www.reddit.com/r/churning" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using 
+                                the <a href="https://pushshift.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>, the same source
+                                as <a href="http://redditsearch.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>redditsearch.io</a>.
+                            </p>
 	                    </div>
 	                    <SearchHelp />
 	                </div>;
@@ -481,9 +500,9 @@ export class App extends React.Component<{}, AppState> {
                             <div>
                                 <h1 className="text-2xl">Churning Search</h1>
                             </div>
-                            {/* Search Term */}
+                            {/* Search Query */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 text-xs font-bold mb-1">Search Term</label>
+                                <label className="block text-gray-700 text-xs font-bold mb-1">Search</label>
                                 <input onChange={this.handleQueryChange}
                                     value={this.state.query}
                                     className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
@@ -574,13 +593,13 @@ export class App extends React.Component<{}, AppState> {
                                 <input onChange={this.handleFilterChange}
                                     value={this.state.filter}
                                     className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                    placeholder="e.g. >10 <100 >100,<900" />
+                                    placeholder="e.g. >1 or <100" />
                             </div>
                             {/* Submit Button and Error text */}
                             <button type="submit"
                                 disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
                                 className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 text-lg " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700')}>
-                                {this.state.searching ? "Searching..." : "Search"}
+                                <span>{this.state.searching ? "Searching..." : "Search"}</span>
                             </button>
                             {this.state.error &&
                                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-4 rounded relative" role="alert">

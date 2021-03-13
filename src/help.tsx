@@ -13,7 +13,7 @@ export class SearchHelp extends React.Component {
 			</thead>
 			<tbody>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Search Term</td>
+				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Search</td>
 				<td className="border px-4 py-2 align-top">
 				  <dl>
 					<dt className="font-bold">Multiple terms (AND operation)</dt>
