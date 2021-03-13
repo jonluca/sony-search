@@ -444,7 +444,7 @@ export class App extends React.Component<{}, AppState> {
             }
             if (Object.keys(this.state.threadType).length > 1) {
                 facets =
-					<div className="mt-8">
+					<div className="mt-8 mb-8">
 	                    <div className="flex justify-between items-center">
 	                        <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
 	                        {selectAll}
@@ -482,9 +482,9 @@ export class App extends React.Component<{}, AppState> {
 					<div id="results-panel" className="flex-1 px-6 py-4 overflow-y-scroll">
 	                    <div>
 	                        <p className="text-center">
-                                Search <a href="https://www.reddit.com/r/churning" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using 
+                                Search <a href="https://www.reddit.com/r/churning" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using
                                 the <a href="https://pushshift.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>, the same source
-                                as <a href="http://redditsearch.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>redditsearch.io</a>.
+                                as <a href="https://redditsearch.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>redditsearch.io</a>.
                             </p>
 	                    </div>
 	                    <SearchHelp />
@@ -494,7 +494,7 @@ export class App extends React.Component<{}, AppState> {
         // Combine everything and return
         return (
             <div className="md:h-screen md:flex">
-                <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-scroll md:flex md:flex-col">
+                <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-auto md:flex md:flex-col">
                     <div>
                         <form onSubmit={this.searchSubmit}>
                             <div>
