@@ -1,6 +1,6 @@
 {
   "name": "churning-search",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Churning subreddit search using the Pushshift API",
   "repository": "https://github.com/garettg/churning-search.git",
   "homepage": "https://garettg.github.io/churning-search",
@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/react": "~17.0.3",
-    "@types/react-dom": "~17.0.2",
+    "@types/react-dom": "~17.0.3",
     "cssnano": "^4.1.10",
     "gh-pages": "^3.1.0",
     "tailwindcss": "~1.9.6",
@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "date-fns": "~2.19.0",
-    "parcel-bundler": "^1.12.4",
+    "parcel-bundler": "^1.12.5",
     "parcel-plugin-inliner": "~1.0.16",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-ga": "~3.3.0",
     "react-markdown": "~5.0.3",
     "react-spinners": "^0.10.6",

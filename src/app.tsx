@@ -360,7 +360,7 @@ export class App extends React.Component<{}, AppState> {
             let threadsOptions = Object.entries(this.state.threadType)
             let threadsFilter = threadsOptions.map(([key, value], i) => {
                 return (
-                    <li className="facet flex items-center" key={i}>
+                    <li className="facet flex items-baseline" key={i}>
                         <label className="inline-block text-black cursor-pointer relative pl-6 pr-1">
                             <span className="absolute left-0 inset-y-0 flex items-center">
                                 <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} />
@@ -445,8 +445,8 @@ export class App extends React.Component<{}, AppState> {
             if (Object.keys(this.state.threadType).length > 1) {
                 facets =
 					<div className="mt-8 mb-8">
-	                    <div className="flex justify-between items-center">
-	                        <label className="text-gray-700 text-xs font-bold mb-1">Threads Filter</label>
+	                    <div className="flex justify-between items-center mb-1">
+	                        <label className="text-gray-700 text-xs font-bold ">Threads Filter</label>
 	                        {selectAll}
 	                    </div>
 	                    <ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">

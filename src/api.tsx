@@ -56,6 +56,9 @@ export class PushshiftAPI {
         for (let i = 0, len = data.data.length; i < len; i++) {
             let permalink = data.data[i].permalink;
             switch (true) {
+                case /_megathread/.test(permalink):
+                    data.data[i].thread = "Megathread";
+                    break;
                 case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
                     data.data[i].thread = "Bank Account Bonus";
                     break;
