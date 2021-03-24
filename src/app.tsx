@@ -23,7 +23,6 @@ interface AppState extends SearchSettings {
     searching: boolean,
     comments: Array<any>,
     posts: Array<any>,
-    lastUrl: string,
     errorStart: boolean,
     errorEnd: boolean,
 }
@@ -42,17 +41,15 @@ export class App extends React.Component<{}, AppState> {
             after: "7d",
             start: "",
             end: "",
-            sortType: "created_utc",
             sort: "desc",
-            filter: "",
+            score: "",
             threadType: {},
             error: null,
             errorTime: null,
             errorStart: false,
             errorEnd: false,
             searching: false,
-            comments: null,
-            lastUrl: "",
+            comments: null
         };
         this.api = new PushshiftAPI();
         this.updatedHash = false;
@@ -101,9 +98,8 @@ export class App extends React.Component<{}, AppState> {
             after: this.state.after,
             start: this.state.start,
             end: this.state.end,
-            sortType: this.state.sortType,
             sort: this.state.sort,
-            filter: this.state.filter
+            score: this.state.score
         };
         localStorage.setItem("search-form", JSON.stringify(toSave));
     }
@@ -159,16 +155,12 @@ export class App extends React.Component<{}, AppState> {
         this.setState({ errorEnd: !this.isDateValid(e.target.value) });
     }
 
-    handleSortByChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        this.setState({ sortType: e.target.value });
-    }
-
     handleSortDirectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         this.setState({ sort: e.target.value });
     }
 
-    handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.setState({ filter: e.target.value });
+    handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        this.setState({ score: e.target.value });
     }
 
     handleThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,19 +252,71 @@ export class App extends React.Component<{}, AppState> {
             after: this.state.after,
             start: this.state.start,
             end: this.state.end,
-            sortType: this.state.sortType,
             sort: this.state.sort,
-            filter: this.state.filter
+            score: this.state.score
         };
         this.updatedHash = true;
         hash_accessor.save(toSave);
 
         // Search
         try {
-            let url = this.api.get_url(this.lastSearch);
-            this.setState({ lastUrl: url });
-            let data = await this.api.query(url);
-            let threadsList = data.data
+            let url1 = this.api.get_url(this.lastSearch, false);
+            let data1 = await this.api.query(url1);
+            let url2 = this.api.get_url(this.lastSearch, true);
+            let data2 = await this.api.query(url2);
+            let data = Object.values(data1.concat(data2).reduce((r, o) => {
+                r[o.id] = o;
+                return r;
+            }, {})).sort((a, b) => {
+                if (this.state.sort === "asc") {
+                    return a.created_utc - b.created_utc;
+                } else {
+                    return b.created_utc - a.created_utc;
+                }
+            });
+
+            for (let i = 0, len = data.length; i < len; i++) {
+                let permalink = data[i].permalink;
+                switch (true) {
+                    case /_megathread/.test(permalink):
+                        data[i].thread = "Megathread";
+                        break;
+                    case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
+                        data[i].thread = "Bank Account Bonus";
+                        break;
+                    case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
+                        data[i].thread = "Daily Question";
+                        break;
+                    case /(discussion_thread_|daily_discussion_)/.test(permalink):
+                        data[i].thread = "Daily Discussion";
+                        break;
+                    case /manufactured_spending_weekly_/.test(permalink):
+                        data[i].thread = "Manufactured Spend";
+                        break;
+                    case /(data_points_central_|data_points_weekly_)/.test(permalink):
+                        data[i].thread = "Data Points";
+                        break;
+                    case /what_card_should_i_get_/.test(permalink):
+                        data[i].thread = "What Card Should I Get";
+                        break;
+                    case /frustration_friday_/.test(permalink):
+                        data[i].thread = "Frustration";
+                        break;
+                    case /mods_choice_/.test(permalink):
+                        data[i].thread = "Mod's Choice";
+                        break;
+                    case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
+                        data[i].thread = "Off Topic";
+                        break;
+                    case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
+                        data[i].thread = "Trip Report/Success";
+                        break;
+                    default:
+                        data[i].thread = "";
+                }
+            }
+
+            let threadsList = data
                 .map(c => c.thread)
                 .filter((x, i, a) => a.indexOf(x) == i)
                 .sort();
@@ -309,7 +353,7 @@ export class App extends React.Component<{}, AppState> {
                 }
             }
             // Update state with results
-            this.setState({ comments: data.data, threadType: threadOptions, searching: false });
+            this.setState({ comments: data, threadType: threadOptions, searching: false });
             let resultsPanel = document.getElementById("results-panel");
             resultsPanel.scrollIntoView();
         } catch (err) {
@@ -556,21 +600,6 @@ export class App extends React.Component<{}, AppState> {
                                 </div>
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-4">
-                                {/* Sort By */}
-                                <div className="col-span-1">
-                                    <label className="block text-gray-700 text-xs font-bold mb-1">Sort By</label>
-                                    <div className="relative">
-                                        <select onChange={this.handleSortByChange}
-                                            value={this.state.sortType}
-                                            className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                                            <option value="created_utc">Date</option>
-                                            <option value="score">Score</option>
-                                        </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                        </div>
-                                    </div>
-                                </div>
                                 {/* Sort Direction */}
                                 <div className="col-span-1">
                                     <label className="block text-gray-700 text-xs font-bold mb-1">Sort Order</label>
@@ -578,23 +607,24 @@ export class App extends React.Component<{}, AppState> {
                                         <select onChange={this.handleSortDirectionChange}
                                             value={this.state.sort}
                                             className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                                            <option value="desc">{this.state.sortType === "score" ? "Highest" : "Newest"}</option>
-                                            <option value="asc">{this.state.sortType === "score" ? "Lowest" : "Oldest"}</option>
+                                            <option value="desc">Newest</option>
+                                            <option value="asc">Oldest</option>
                                         </select>
                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                                         </div>
                                     </div>
                                 </div>
+                                {/* Score */}
+                                <div className="col-span-1">
+                                    <label className="block text-gray-700 text-xs font-bold mb-1">Minimum Score</label>
+                                    <input onChange={this.handleScoreChange}
+                                        value={this.state.score}
+                                        className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                        placeholder="e.g. 1" />
+                                </div>
                             </div>
-                            {/* Score */}
-                            <div className="mt-2">
-                                <label className="block text-gray-700 text-xs font-bold mb-1">Score Filter</label>
-                                <input onChange={this.handleFilterChange}
-                                    value={this.state.filter}
-                                    className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                    placeholder="e.g. >1 or <100" />
-                            </div>
+
                             {/* Submit Button and Error text */}
                             <button type="submit"
                                 disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}

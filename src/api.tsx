@@ -1,26 +1,61 @@
 import * as React from "react";
 
+import { subDays } from 'date-fns';
+
 export interface SearchSettings {
     query: string,
     author: string,
     after: string,
     start: string,
     end: string,
-    sort: string,
-    sortType: string,
-    filter: string
+    sort: string
+}
+
+const SearchRange = {
+    "1d": {
+        "name": "1 Day",
+        "beta": 1
+    },
+    "7d": {
+        "name": "1 Week",
+        "beta": 7
+    },
+    "31d": {
+        "name": "1 Month",
+        "beta": 31
+    },
+    "90d": {
+        "name": "3 Months",
+        "beta": 90
+    },
+    "182d": {
+        "name": "6 Months",
+        "beta": 182
+    },
+    "1y": {
+        "name": "1 Year",
+        "beta": 366
+    },
+    "2y": {
+        "name": "2 Years",
+        "beta": 732
+    },
 }
 
 export class PushshiftAPI {
-    get_url(settings: SearchSettings): string {
+    get_url(settings: SearchSettings, beta: boolean): string {
         let args = {
-            html_decode: "true",
+            sortType: "created_utc",
             subreddit: "churning",
-            size: 100, // API limit
-            user_removed: "false",
-            mod_removed: "false",
+            size: 250, // API limit
             filter: "permalink,link_id,id,body,author,score,created_utc"
         };
+
+        if (!beta) {
+            args["html_decode"] = true;
+            args["user_removed"] = false;
+            args["mod_removed"] = false;
+        }
         if (settings.query) {
             args["q"] = settings.query;
         }
@@ -28,24 +63,38 @@ export class PushshiftAPI {
             args["author"] = settings.author;
         }
         if (settings.after !== "") {
-            args["after"] = settings.after;
+            if (beta) {
+                args["min_created_utc"] = Math.floor((subDays(new Date().setHours(0,0,0,0), SearchRange[settings.after].beta).getTime()) / 1000 );
+            } else {
+                args["after"] = settings.after;
+            }
         } else {
-            let startTime = settings.start + " 00:00:00";
-            args["after"] = parseInt((new Date(startTime).getTime() / 1000).toFixed(0));
-            let endTime = settings.end + " 23:59:59";
-            args["before"] = parseInt((new Date(endTime).getTime() / 1000).toFixed(0));
+            if (beta) {
+                args["min_created_utc"] = Math.floor(new Date(settings.start).getTime() / 1000);
+                args["max_created_utc"] = Math.floor(new Date(settings.end).getTime() / 1000);
+            } else {
+                args["after"] = Math.floor(new Date(settings.start).getTime() / 1000);
+                args["before"] = Math.floor(new Date(settings.end).getTime() / 1000);
+            }
         }
         if (settings.sort) {
             args["sort"] = settings.sort;
         }
-        if (settings.sortType) {
-            args["sort_type"] = settings.sortType;
+        if (settings.score) {
+            if (beta) {
+                args["min_score"] = settings.score;
+            } else {
+                args["score"] = `>${settings.score}`
+            }
         }
-        if (settings.filter) {
-            args["score"] = settings.filter;
-        }
+
         let joinedArgs = Object.entries(args).map(([k, v]) => `${k}=${v}`).join('&');
-        return `https://api.pushshift.io/reddit/comment/search?${joinedArgs}`
+
+        if (beta) {
+            return `https://beta.pushshift.io/search/reddit/comments?${joinedArgs}`;
+        } else {
+            return `https://api.pushshift.io/reddit/comment/search?${joinedArgs}`;
+        }
     }
 
     async query(url: string): Promise<any> {
@@ -53,46 +102,6 @@ export class PushshiftAPI {
             referrerPolicy: 'no-referrer'
         });
         let data = await resp.json();
-        for (let i = 0, len = data.data.length; i < len; i++) {
-            let permalink = data.data[i].permalink;
-            switch (true) {
-                case /_megathread/.test(permalink):
-                    data.data[i].thread = "Megathread";
-                    break;
-                case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
-                    data.data[i].thread = "Bank Account Bonus";
-                    break;
-                case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
-                    data.data[i].thread = "Daily Question";
-                    break;
-                case /(discussion_thread_|daily_discussion_)/.test(permalink):
-                    data.data[i].thread = "Daily Discussion";
-                    break;
-                case /manufactured_spending_weekly_/.test(permalink):
-                    data.data[i].thread = "Manufactured Spend";
-                    break;
-                case /(data_points_central_|data_points_weekly_)/.test(permalink):
-                    data.data[i].thread = "Data Points";
-                    break;
-                case /what_card_should_i_get_/.test(permalink):
-                    data.data[i].thread = "What Card Should I Get";
-                    break;
-                case /frustration_friday_/.test(permalink):
-                    data.data[i].thread = "Frustration";
-                    break;
-                case /mods_choice_/.test(permalink):
-                    data.data[i].thread = "Mod's Choice";
-                    break;
-                case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
-                    data.data[i].thread = "Off Topic";
-                    break;
-                case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
-                    data.data[i].thread = "Trip Report/Success";
-                    break;
-                default:
-                    data.data[i].thread = "";
-            }
-        }
-        return data;
+        return data.data;
     }
 }
