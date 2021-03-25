@@ -74,22 +74,16 @@ export class SearchHelp extends React.Component {
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Sort By</td>
-				<td className="border px-4 py-2 align-top">
-				  <p>Select a sort by parameter for sorting. Options are score and date.</p>
-				</td>
-			  </tr>
-			  <tr>
 				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Sort Order</td>
 				<td className="border px-4 py-2 align-top">
-				  <p>Select a sort order parameter for the direction you want the results to be ordered by. Options for score are highest and lowest; and for date, options are newest and oldest.</p>
+				  <p>Select a sort order for date, options are newest and oldest.</p>
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Score Filter</td>
+				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Minimum Score</td>
 				<td className="border px-4 py-2 align-top">
-  				  <p>The score parameter allows you to search for comments with a specific score or range of scores. Use greater than or less than to restrict results that match your comparision operator.</p>
-				  <p className="italic">Example: &gt;0</p>
+  				  <p>The score parameter allows you to search for comments with minimum score.</p>
+				  <p className="italic">Example: 1</p>
 				</td>
 			  </tr>
 			</tbody>
