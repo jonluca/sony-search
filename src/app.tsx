@@ -374,6 +374,13 @@ export class App extends React.Component<{}, AppState> {
         document.execCommand('copy');
         shareInput.parentNode.removeChild(shareInput);
         toast.success('Share Link Copied!');
+        if (!isDevMode) {
+            ReactGA.event({
+                category: 'Share',
+                action: 'Click',
+                label: JSON.stringify(toShare)
+            });
+        }
     }
 
     /** Render the app
