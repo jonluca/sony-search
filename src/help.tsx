@@ -3,7 +3,6 @@ import * as React from 'react';
 export class SearchHelp extends React.Component {
   render(): React.ReactNode {
     return (
-		<div className="w-full xl:w-3/4 lg:w-5/6 mx-auto mt-3">
 		  <table className="table-auto text-sm">
 			<thead>
 			  <tr>
@@ -70,25 +69,24 @@ export class SearchHelp extends React.Component {
 			  <tr>
 				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Time Range</td>
 				<td className="border px-4 py-2 align-top">
-				  <p>Select a time range from the dropdown. Options include 1 day, 1 week, 1 month, 3 months, 6 months, 1 year, 2 year, and custom new options to appear to select a start and end date. Start and End dates should be in MM/DD/YYYY format.</p>
+				  <p>Select a time range from the dropdown. Options include 1 day, 1 week, 1 month, 3 months, 6 months, 1 year, 2 year, and Custom. Custom allows a date range to be selected via calendar widget.</p>
 				</td>
 			  </tr>
 			  <tr>
 				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Sort Order</td>
 				<td className="border px-4 py-2 align-top">
-				  <p>Select a sort order for date, options are newest and oldest.</p>
+				  <p>Select a sort order by date, options are newest and oldest.</p>
 				</td>
 			  </tr>
 			  <tr>
 				<td className="border px-4 py-2 align-top whitespace-no-wrap font-bold">Minimum Score</td>
 				<td className="border px-4 py-2 align-top">
-  				  <p>The score parameter allows you to search for comments with minimum score.</p>
-				  <p className="italic">Example: 1</p>
+  				  <p>The score parameter allows you to search for comments with minimum score. (Score is not consistent with live data, score is as of time of snapshot)</p>
+				  <p className="italic pl-4">Example: 1</p>
 				</td>
 			  </tr>
 			</tbody>
 		  </table>
-		</div>
 	)
   }
 }

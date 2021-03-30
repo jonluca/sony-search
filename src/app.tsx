@@ -2,11 +2,18 @@ import * as React from 'react';
 import ta from 'time-ago';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
-import { isValid, parse } from 'date-fns';
+import { subDays, addDays, format } from 'date-fns';
 import ReactGA from 'react-ga';
+import LZString from "lz-string";
+import { isEmpty } from "underscore";
+import { DateRange } from 'react-date-range';
+import toast from 'react-hot-toast';
 
-import { PushshiftAPI, SearchSettings } from './api';
+import { PushshiftAPI, SearchSettings, SearchRange } from './api';
 import { SearchHelp } from './help';
+
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const isDevMode = (location.hostname !== "garettg.github.io");
 
@@ -15,79 +22,83 @@ ReactGA.initialize('UA-171174933-1', {
     debug: isDevMode,
     testMode: isDevMode
 });
-ReactGA.pageview(window.location.pathname);
+if ( !isDevMode ){
+    ReactGA.pageview(window.location.pathname);
+}
 
 interface AppState extends SearchSettings {
     error: string,
-    errorTime: Date,
     searching: boolean,
-    comments: Array<any>,
-    posts: Array<any>,
-    errorStart: boolean,
-    errorEnd: boolean,
+    comments: Array<any>
 }
 
 /** Main class for Reddit Search */
 export class App extends React.Component<{}, AppState> {
     lastSearch: SearchSettings;
+    lastThreadType: object;
     api: PushshiftAPI;
-    updatedHash: boolean;
 
     constructor(props) {
         super(props);
         this.state = {
             query: "",
             author: "",
-            after: "7d",
-            start: "",
-            end: "",
+            time: "7d",
+            selectionRange: {
+                startDate: subDays(new Date(), 7),
+                endDate: new Date(),
+                key: "selection"
+            }
             sort: "desc",
             score: "",
             threadType: {},
             error: null,
-            errorTime: null,
-            errorStart: false,
-            errorEnd: false,
             searching: false,
             comments: null
         };
         this.api = new PushshiftAPI();
-        this.updatedHash = false;
     }
 
-    loadLocationHash(shouldSearch: boolean = false) {
-        let params = hash_accessor.load();
-        if (shouldSearch) {
-            this.setState(params, this.doSearch);
-        } else {
-            this.setState(params);
+    loadSavedState(formData: object = {}, shouldSearch: boolean = false) {
+        if (
+            !isEmpty(formData)
+            &&
+            formData.hasOwnProperty("selectionRange")
+            &&
+            formData.selectionRange.hasOwnProperty("startDate")
+            &&
+            formData.selectionRange.hasOwnProperty("endDate")
+        ) {
+            formData.selectionRange.startDate = new Date(formData.selectionRange.startDate);
+            formData.selectionRange.endDate = new Date(formData.selectionRange.endDate);
+
+            if (shouldSearch) {
+                if (formData.hasOwnProperty("threadType") && !isEmpty(formData.threadType)) {
+                    this.lastThreadType = formData.threadType;
+                }
+                this.setState(formData, this.doSearch);
+            } else {
+                this.setState(formData);
+            }
         }
     }
 
     componentDidMount() {
-        // Add hash change event listener
-        window.addEventListener("hashchange", e => {
-            if (this.updatedHash) {
-                this.updatedHash = false;
-                return;
-            }
-            console.log("location.hash changed. loading new params");
-            this.loadLocationHash();
-        });
-
         // Check for location hash. Use it if found
         if (window.location.hash) {
-            this.loadLocationHash(true);
-            console.log("Loaded params from location.hash");
+            let formData = utils.decompress(window.location.hash.slice(1));
+            this.loadSavedState(formData, true);
+            console.log("Loaded state from location.hash");
+            // Remove hash now that we have the data
+            history.replaceState(null, null, ' ');
             return;
         }
 
         // Load stored form data if exists
-        let formDataJson = localStorage.getItem("search-form");
-        if (formDataJson !== null) {
-            let formData: SearchSettings = JSON.parse(formDataJson);
-            this.setState(formData);
-            console.log("Loaded params from local storage");
+        let localStorageData = utils.decompress(localStorage.getItem("churning-search"));
+        if ( !isEmpty(localStorageData) ) {
+            this.loadSavedState(localStorageData);
+            console.log("Loaded state from local storage");
         }
     }
 
@@ -95,21 +106,16 @@ export class App extends React.Component<{}, AppState> {
         let toSave: SearchSettings = {
             query: this.state.query,
             author: this.state.author,
-            after: this.state.after,
-            start: this.state.start,
-            end: this.state.end,
+            time: this.state.time,
+            selectionRange: this.state.selectionRange,
             sort: this.state.sort,
             score: this.state.score
         };
-        localStorage.setItem("search-form", JSON.stringify(toSave));
-    }
-
-    isDateValid = (date: string) => {
-        return isValid(parse(date, "M/d/y", new Date()));
+        localStorage.setItem("churning-search", utils.compress(toSave));
     }
 
     setError = (error: string) => {
-        this.setState({ error: error, errorTime: new Date() });
+        this.setState({ error: error });
     }
 
     handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,39 +126,16 @@ export class App extends React.Component<{}, AppState> {
         this.setState({ author: e.target.value });
     }
 
-    handleAfterDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        let tempState = { after: e.target.value };
+    handleTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        let tempState = { time: e.target.value };
         if (e.target.value !== "") {
-            tempState.errorStart = false;
-            tempState.errorEnd = false;
-            tempState.start = "";
-            tempState.end = "";
+            tempState.selectionRange = {
+                startDate: subDays(new Date(), 7),
+                endDate: new Date(),
+                key: "selection"
+            }
         }
         this.setState(tempState);
-    }
-
-    handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let tempState = { start: e.target.value };
-        if (this.state.errorStart && this.isDateValid(e.target.value)) {
-            tempState.errorStart = false;
-        }
-        this.setState(tempState);
-    }
-
-    handleEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let tempState = { end: e.target.value };
-        if (this.state.errorEnd && this.isDateValid(e.target.value)) {
-            tempState.errorEnd = false;
-        }
-        this.setState(tempState);
-    }
-
-    validateStartDate = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.setState({ errorStart: !this.isDateValid(e.target.value) });
-    }
-
-    validateEndDate = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.setState({ errorEnd: !this.isDateValid(e.target.value) });
     }
 
     handleSortDirectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -242,24 +225,12 @@ export class App extends React.Component<{}, AppState> {
     }
 
     doSearch = async () => {
-        this.setState({ threadType: {}, error: null, comments: null, posts: null, searching: true });
+        this.setState({ threadType: {}, error: null, comments: null, searching: true });
         this.lastSearch = { ...this.state };
-
-        // Update location.hash
-        let toSave = {
-            query: this.state.query,
-            author: this.state.author,
-            after: this.state.after,
-            start: this.state.start,
-            end: this.state.end,
-            sort: this.state.sort,
-            score: this.state.score
-        };
-        this.updatedHash = true;
-        hash_accessor.save(toSave);
 
         // Search
         try {
+            let threadOptions = {};
             let url1 = this.api.get_url(this.lastSearch, false);
             let data1 = await this.api.query(url1);
             let url2 = this.api.get_url(this.lastSearch, true);
@@ -275,64 +246,76 @@ export class App extends React.Component<{}, AppState> {
                 }
             });
 
-            for (let i = 0, len = data.length; i < len; i++) {
-                let permalink = data[i].permalink;
-                switch (true) {
-                    case /_megathread/.test(permalink):
-                        data[i].thread = "Megathread";
-                        break;
-                    case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
-                        data[i].thread = "Bank Account Bonus";
-                        break;
-                    case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
-                        data[i].thread = "Daily Question";
-                        break;
-                    case /(discussion_thread_|daily_discussion_)/.test(permalink):
-                        data[i].thread = "Daily Discussion";
-                        break;
-                    case /manufactured_spending_weekly_/.test(permalink):
-                        data[i].thread = "Manufactured Spend";
-                        break;
-                    case /(data_points_central_|data_points_weekly_)/.test(permalink):
-                        data[i].thread = "Data Points";
-                        break;
-                    case /what_card_should_i_get_/.test(permalink):
-                        data[i].thread = "What Card Should I Get";
-                        break;
-                    case /frustration_friday_/.test(permalink):
-                        data[i].thread = "Frustration";
-                        break;
-                    case /mods_choice_/.test(permalink):
-                        data[i].thread = "Mod's Choice";
-                        break;
-                    case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
-                        data[i].thread = "Off Topic";
-                        break;
-                    case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
-                        data[i].thread = "Trip Report/Success";
-                        break;
-                    default:
-                        data[i].thread = "";
+            if ( data.length > 0 ) {
+                for (let i = 0, len = data.length; i < len; i++) {
+                    let permalink = data[i].permalink;
+                    switch (true) {
+                        case /_megathread/.test(permalink):
+                            data[i].thread = "Megathread";
+                            break;
+                        case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
+                            data[i].thread = "Bank Account Bonus";
+                            break;
+                        case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
+                            data[i].thread = "Daily Question";
+                            break;
+                        case /(discussion_thread_|daily_discussion_)/.test(permalink):
+                            data[i].thread = "Daily Discussion";
+                            break;
+                        case /manufactured_spending_weekly_/.test(permalink):
+                            data[i].thread = "Manufactured Spend";
+                            break;
+                        case /(data_points_central_|data_points_weekly_)/.test(permalink):
+                            data[i].thread = "Data Points";
+                            break;
+                        case /what_card_should_i_get_/.test(permalink):
+                            data[i].thread = "What Card Should I Get";
+                            break;
+                        case /frustration_friday_/.test(permalink):
+                            data[i].thread = "Frustration";
+                            break;
+                        case /mods_choice_/.test(permalink):
+                            data[i].thread = "Mod's Choice";
+                            break;
+                        case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
+                            data[i].thread = "Off Topic";
+                            break;
+                        case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
+                            data[i].thread = "Trip Report/Success";
+                            break;
+                        default:
+                            data[i].thread = "";
+                    }
                 }
+
+                // Build a list of unique threads and sort
+                let threadsList = data.map(c => c.thread).filter((x, i, a) => a.indexOf(x) == i).sort();
+                threadsList.map(thread => {
+                    if (thread === "") {
+                        thread = "None";
+                    }
+                    if ( !isEmpty(this.lastThreadType) && this.lastThreadType.hasOwnProperty(thread) ) {
+                        threadOptions[thread] = this.lastThreadType[thread];
+                    } else {
+                        threadOptions[thread] = true;
+                    }
+                });
             }
 
-            let threadsList = data
-                .map(c => c.thread)
-                .filter((x, i, a) => a.indexOf(x) == i)
-                .sort();
-            let threadOptions = {};
-            threadsList.map(thread => {
-                if (thread === "") {
-                    thread = "None";
-                }
-                threadOptions[thread] = true;
-            })
-
-            for (const [key, value] of Object.entries(toSave)) {
+            let toStats = {
+                query: this.state.query,
+                author: this.state.author,
+                after: this.state.time, // keeping same key name even though state key changed
+                start: format(this.state.selectionRange.startDate, 'P'),
+                end: format(this.state.selectionRange.endDate, 'P'),
+                sort: this.state.sort,
+                score: this.state.score
+            };
+            for (const [key, value] of Object.entries(toStats)) {
                 if (value !== "" && !isDevMode) {
                     ReactGA.event({
                         nonInteraction: true,
-		    			category: 'Search',
+                        category: 'Search',
                         action: key,
                         label: value
                     });
@@ -352,6 +335,8 @@ export class App extends React.Component<{}, AppState> {
                     })
                 }
             }
+            // Reset the last threadType
+            this.lastThreadType = {};
             // Update state with results
             this.setState({ comments: data, threadType: threadOptions, searching: false });
             let resultsPanel = document.getElementById("results-panel");
@@ -359,12 +344,12 @@ export class App extends React.Component<{}, AppState> {
         } catch (err) {
             this.setState({ searching: false });
             this.setError(String(err));
-			if (!isDevMode) {
-				ReactGA.exception({
-					description: String(err),
-					fatal: true
-				})
-			}
+            if (!isDevMode) {
+                ReactGA.exception({
+                    description: String(err),
+                    fatal: true
+                })
+            }
         }
     }
 
@@ -376,7 +361,19 @@ export class App extends React.Component<{}, AppState> {
     }
 
     clearResults = () => {
-        this.setState({ threadType: {}, error: null, comments: null, posts: null, searching: false });
+        this.setState({ threadType: {}, error: null, comments: null, searching: false });
+    }
+
+    shareResults = () => {
+        let { error, searching, comments, ...toShare } = this.state;
+        let shareUrl = `${window.location.href}#${utils.compress(toShare)}`;
+        let shareInput = document.body.appendChild(document.createElement("input"));
+        shareInput.value = shareUrl;
+        shareInput.focus();
+        shareInput.select();
+        document.execCommand('copy');
+        shareInput.parentNode.removeChild(shareInput);
+        toast.success('Share Link Copied!');
     }
 
     /** Render the app
@@ -384,6 +381,12 @@ export class App extends React.Component<{}, AppState> {
      */
     render(): React.ReactNode {
         let linkClass = "text-blue-700 hover:text-blue-500 hover:underline";
+        let inputProps = {
+            "autoComplete": "off",
+            "autoCorrect": "off",
+            "autoCapitalize": "off",
+            "spellCheck": "false"
+        }
         let content;
         let facets;
         let resultCount;
@@ -400,6 +403,7 @@ export class App extends React.Component<{}, AppState> {
                 className={linkClass + " no-underline hover:underline"}
                 onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a></p>
         </>;
+
         if (this.state.comments) {
             let threadsOptions = Object.entries(this.state.threadType)
             let threadsFilter = threadsOptions.map(([key, value], i) => {
@@ -407,11 +411,11 @@ export class App extends React.Component<{}, AppState> {
                     <li className="facet flex items-baseline" key={i}>
                         <label className="inline-block text-black cursor-pointer relative pl-6 pr-1">
                             <span className="absolute left-0 inset-y-0 flex items-center">
-                                <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} />
+                                <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} className="form-checkbox" />
                             </span>
                             <span className="text-sm">{key}</span>
                         </label>
-                        <button className={"only cursor-pointer text-xs ml-2 px-1 hidden lg:inline-block " + linkClass}
+                        <button className={"only cursor-pointer text-sm ml-2 px-1 hidden lg:inline-block " + linkClass}
                             onClick={() => this.handleThreadsOnly(key)}>only</button>
                     </li>
                 )
@@ -445,7 +449,7 @@ export class App extends React.Component<{}, AppState> {
                 }
 
                 return (
-                    <div className="w-full rounded bg-gray-200 shadow px-6 py-4 mb-6 overflow-hidden" key={comment.id}>
+                    <div className="w-full rounded bg-gray-200 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                 target="_blank"
@@ -460,12 +464,13 @@ export class App extends React.Component<{}, AppState> {
                         </div>
                         <a href={`https://www.reddit.com${permalink}?context=1`}
                             onClick={(e) => this.handleResultClick(e, comment)}
-                            className="block text-sm leading-5 py-4" target="_blank">
-                            <ReactMarkdown source={comment.body}
-                                linkTarget="_blank"
+                            className="block text-sm leading-5 py-4 px-1 reddit-comment" target="_blank">
+                            <ReactMarkdown
+                                source={comment.body.replace(/^(?:&gt;)/gm, "\n>")}
                                 plugins={[gfm]}
                                 disallowedTypes={['link']}
-                                unwrapDisallowed />
+                                unwrapDisallowed
+                            />
                         </a>
                         <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
                             {threadBadge}
@@ -481,64 +486,88 @@ export class App extends React.Component<{}, AppState> {
             let selectAll;
             if (!allChecked) {
                 selectAll =
-					<button className={"text-xs focus:outline-none hidden lg:block " + linkClass}
-                    		onClick={this.handleThreadsAll}>
-                    	Select All
+                    <button className={"text-xs focus:outline-none hidden lg:block " + linkClass}
+                        onClick={this.handleThreadsAll}>
+                        Select All
 		  			</button>;
             }
             if (Object.keys(this.state.threadType).length > 1) {
                 facets =
-					<div className="mt-8 mb-8">
-	                    <div className="flex justify-between items-center mb-1">
-	                        <label className="text-gray-700 text-xs font-bold ">Threads Filter</label>
-	                        {selectAll}
-	                    </div>
-	                    <ul className="py-2 px-3 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
-	                        {threadsFilter}
-	                    </ul>
-	                </div>;
+                    <div className="mt-8 mb-4">
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-gray-700 text-xs font-bold ">Threads Filter</label>
+                            {selectAll}
+                        </div>
+                        <ul className="py-2 px-4 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
+                            {threadsFilter}
+                        </ul>
+                    </div>;
             }
             content =
-				<div id="results-panel" className="flex-1 flex flex-col overflow-hidden">
-                	<div className="border-b flex flex justify-between items-center px-6 py-2">
-                    	<span className="font-bold text-lg">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
-                        <button className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
+                <div id="results-panel" className="flex-1 flex flex-col overflow-hidden">
+                    <div className="border-b flex flex justify-between items-center px-4 py-2">
+                        <span className="font-bold text-lg">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
+                        <div className="flex space-x-2 md:space-x-4">
+                            <button className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
+                                title="Share Results"
+                                onClick={this.shareResults}>
+                                <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                <span className="hidden md:inline">Share</span>
+                            </button>
+                            <button className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
                                 title="Clear Results"
                                 onClick={this.clearResults}>
-                            <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            <span>Clear</span>
-                        </button>
-                	</div>
-                	<div className="px-6 py-4 flex-1 overflow-y-scroll">
-                    	{inner}
-	                    <div className="text-center font-bold text-lg py-4">
-	                        {resultCount > 0 ? `End of Results` : `No Results Found`}
-	                    </div>
-                	</div>
-            	</div>;
+                                <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span className="hidden md:inline">Clear</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="p-4 flex-1 overflow-y-scroll">
+                        {inner}
+                        <div className="text-center font-bold text-lg py-4">
+                            {resultCount > 0 ? `End of Results` : `No Results Found`}
+                        </div>
+                        <div className="text-center text-xs py-4">
+                            {infoText}
+                        </div>
+                    </div>
+                </div>;
         } else {
             if (this.state.searching) {
-                content = <div id="results-panel" className="px-6 py-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
+                content = <div id="results-panel" className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4" />
             } else {
                 content =
-					<div id="results-panel" className="flex-1 px-6 py-4 overflow-y-scroll">
-	                    <div>
-	                        <p className="text-center">
+                    <div id="results-panel" className="flex-1 p-4 overflow-y-scroll">
+                        <div className="w-full xl:w-3/4 lg:w-5/6 mx-auto">
+                            {this.state.error &&
+                                <div className="flex items-start bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded" role="alert">
+                                    <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div className="font-bold">Error: {this.state.error}</div>
+                                </div>
+                            }
+                            <div className="text-center py-4">
                                 Search <a href="https://www.reddit.com/r/churning" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using
                                 the <a href="https://pushshift.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>, the same source
                                 as <a href="https://redditsearch.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>redditsearch.io</a>.
-                            </p>
-	                    </div>
-	                    <SearchHelp />
-	                </div>;
+                            </div>
+                            <SearchHelp />
+                            <div className="text-center text-xs py-4">
+                                {infoText}
+                            </div>
+                        </div>
+                    </div>;
             }
         }
         // Combine everything and return
         return (
             <div className="md:h-screen md:flex">
-                <div className="md:w-2/6 xl:w-1/4 px-6 py-4 bg-blue-200 overflow-y-auto md:flex md:flex-col">
+                <div className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 overflow-y-auto md:flex md:flex-col">
                     <div>
                         <form onSubmit={this.searchSubmit}>
                             <div>
@@ -549,55 +578,48 @@ export class App extends React.Component<{}, AppState> {
                                 <label className="block text-gray-700 text-xs font-bold mb-1">Search</label>
                                 <input onChange={this.handleQueryChange}
                                     value={this.state.query}
-                                    className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
+                                    className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                    {...inputProps}
+                                />
                             </div>
                             {/* Author */}
                             <div className="mt-2">
                                 <label className="block text-gray-700 text-xs font-bold mb-1">Author</label>
                                 <input onChange={this.handleAuthorChange}
                                     value={this.state.author}
-                                    className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
+                                    className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                    {...inputProps}
+                                />
                             </div>
                             {/* Time Range */}
                             <div className="mt-2">
                                 <label className="block text-gray-700 text-xs font-bold mb-1">Time Range</label>
                                 <div className="relative">
-                                    <select onChange={this.handleAfterDateChange}
-                                        value={this.state.after}
-                                        className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                                        <option value="1d">1 Day</option>
-                                        <option value="7d">1 Week</option>
-                                        <option value="31d">1 Month</option>
-                                        <option value="90d">3 Months</option>
-                                        <option value="182d">6 Months</option>
-                                        <option value="1y">1 Year</option>
-                                        <option value="2y">2 Years</option>
+                                    <select onChange={this.handleTimeChange}
+                                        value={this.state.time}
+                                        className="form-select block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-gray-500 focus:outline-none">
+                                        {
+                                            Object.entries(SearchRange).map(([key, obj], index) => {
+                                                return (
+                                                    <option value={key} key={index}>{obj.name}</option>
+                                                );
+                                            })
+                                        }
                                         <option value="">Custom</option>
                                     </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                    </div>
                                 </div>
                             </div>
-                            <div className={"mt-2 " + (this.state.after === "" ? 'grid' : 'hidden') + " grid-cols-2 gap-4"}>
-                                <div className="col-span-1">
-                                    <label className="block text-gray-700 text-xs font-bold mb-1">Start Date</label>
-                                    <input onChange={this.handleStartChange}
-                                        onBlur={this.validateStartDate}
-                                        value={this.state.start}
-                                        className={"text-sm block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorStart ? 'border-red-500' : 'border-gray-200 focus:border-gray-500')}
-                                        placeholder="MM/DD/YYYY" />
-                                    <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorStart ? 'block' : 'hidden')}>Enter a valid date</p>
-                                </div>
-                                <div className="col-span-1">
-                                    <label className="block text-gray-700 text-xs font-bold mb-1">End Date</label>
-                                    <input onChange={this.handleEndChange}
-                                        onBlur={this.validateEndDate}
-                                        value={this.state.end}
-                                        className={"text-sm block appearance-none w-full bg-gray-200 border text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white " + (this.state.errorEnd ? 'border-red-500' : 'border-gray-200 focus:border-gray-500')}
-                                        placeholder="MM/DD/YYYY" />
-                                    <p className={"text-red-500 text-xs italic mt-2 " + (this.state.errorEnd ? 'block' : 'hidden')}>Enter a valid date</p>
-                                </div>
+                            {/* Date Range Picker */}
+                            <div className={`mt-2 customize-date-range ${this.state.time === "" ? 'block' : 'hidden'}`}>
+                                <DateRange
+                                    editableDateInputs={false}
+                                    onChange={(item) => this.setState({selectionRange: item.selection})}
+                                    moveRangeOnFirstSelection={false}
+                                    minDate={new Date(2012, 11, 11, 0, 0, 0, 0)}
+                                    maxDate={new Date()}
+                                    ranges={[this.state.selectionRange]}
+                                    rangeColors={['#3182ce', '#3ecf8e', '#fed14c']}
+                                />
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-4">
                                 {/* Sort Direction */}
@@ -606,13 +628,10 @@ export class App extends React.Component<{}, AppState> {
                                     <div className="relative">
                                         <select onChange={this.handleSortDirectionChange}
                                             value={this.state.sort}
-                                            className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                                            className="form-select block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-gray-500 focus:outline-none">
                                             <option value="desc">Newest</option>
                                             <option value="asc">Oldest</option>
                                         </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                        </div>
                                     </div>
                                 </div>
                                 {/* Score */}
@@ -620,8 +639,10 @@ export class App extends React.Component<{}, AppState> {
                                     <label className="block text-gray-700 text-xs font-bold mb-1">Minimum Score</label>
                                     <input onChange={this.handleScoreChange}
                                         value={this.state.score}
-                                        className="text-sm block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                        placeholder="e.g. 1" />
+                                        className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                        placeholder="e.g. 1"
+                                        {...inputProps}
+                                    />
                                 </div>
                             </div>
 
@@ -631,47 +652,40 @@ export class App extends React.Component<{}, AppState> {
                                 className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 text-lg " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700')}>
                                 <span>{this.state.searching ? "Searching..." : "Search"}</span>
                             </button>
-                            {this.state.error &&
-                                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-4 rounded relative" role="alert">
-                                    <div className="font-bold">{this.state.errorTime.toLocaleTimeString()} Error: {this.state.error}</div>
-                                    <span className="absolute top-0 bottom-0 right-0 px-4 py-3">
-                                        <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" /></svg>
-                                    </span>
-                                </div>
-                            }
                         </form>
                         {facets}
                     </div>
-                    <div className="hidden md:block mt-auto text-xs">
-                        {infoText}
-                    </div>
                 </div>
                 {content}
-                <div className="block md:hidden mt-3 text-xs px-6 py-4">
-                    {infoText}
-                </div>
             </div>
         );
     }
 }
 
-// https://gist.github.com/jokester/4a543ea76dbc5ae1bf05
-let hash_accessor = (function(window) {
+let utils = (function(window) {
     return {
-        load: function() {
+        compress: function(obj) {
             try {
-                // strip ^#
-                let json_str_escaped = window.location.hash.slice(1);
-                // unescape
-                let json_str = decodeURIComponent(json_str_escaped);
-                return JSON.parse(json_str);
+                let compressedObj = LZString.compressToEncodedURIComponent(JSON.stringify(obj));
+                return compressedObj;
             } catch (e) {
-                return {};
+                console.log("utils.compress did not happen", "\n", e, "\n", obj);
+                return '';
             }
         },
-        save: function(obj) {
-            // use replace so that previous url does not go into history
-            window.location.replace('#' + JSON.stringify(obj, (key, value) => { if (value) return value; }));
+        decompress: function(string) {
+            try {
+                let decompressedEscaped = LZString.decompressFromEncodedURIComponent(string);
+                let decompressed = decodeURIComponent(decompressedEscaped);
+                if (decompressedEscaped) {
+                    return JSON.parse(decompressed);
+                } else {
+                    return {};
+                }
+            } catch (e) {
+                console.log("utils.decompress did not happen", "\n", e, "\n", string);
+                return {};
+            }
         }
     };
 })(window);

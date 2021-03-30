@@ -5,41 +5,20 @@ import { subDays } from 'date-fns';
 export interface SearchSettings {
     query: string,
     author: string,
-    after: string,
-    start: string,
-    end: string,
-    sort: string
+    time: string,
+    selectionRange: object
+    sort: string,
+    score: number
 }
 
-const SearchRange = {
-    "1d": {
-        "name": "1 Day",
-        "beta": 1
-    },
-    "7d": {
-        "name": "1 Week",
-        "beta": 7
-    },
-    "31d": {
-        "name": "1 Month",
-        "beta": 31
-    },
-    "90d": {
-        "name": "3 Months",
-        "beta": 90
-    },
-    "182d": {
-        "name": "6 Months",
-        "beta": 182
-    },
-    "1y": {
-        "name": "1 Year",
-        "beta": 366
-    },
-    "2y": {
-        "name": "2 Years",
-        "beta": 732
-    },
+export const SearchRange = {
+    "1d": { "name": "1 Day", "beta": 1 },
+    "7d": { "name": "1 Week", "beta": 7 },
+    "31d": { "name": "1 Month", "beta": 31 },
+    "90d": { "name": "3 Months", "beta": 90 },
+    "182d": { "name": "6 Months", "beta": 182 },
+    "1y": { "name": "1 Year", "beta": 366 },
+    "2y": { "name": "2 Years", "beta": 732 }
 }
 
 export class PushshiftAPI {
@@ -62,19 +41,19 @@ export class PushshiftAPI {
         if (settings.author) {
             args["author"] = settings.author;
         }
-        if (settings.after !== "") {
+        if (settings.time !== "") {
             if (beta) {
-                args["min_created_utc"] = Math.floor((subDays(new Date().setHours(0,0,0,0), SearchRange[settings.after].beta).getTime()) / 1000 );
+                args["min_created_utc"] = Math.floor((subDays(new Date().setHours(0, 0, 0, 0), SearchRange[settings.time].beta).getTime()) / 1000);
             } else {
-                args["after"] = settings.after;
+                args["after"] = settings.time;
             }
         } else {
             if (beta) {
-                args["min_created_utc"] = Math.floor(new Date(settings.start).getTime() / 1000);
-                args["max_created_utc"] = Math.floor(new Date(settings.end).getTime() / 1000);
+                args["min_created_utc"] = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
+                args["max_created_utc"] = Math.floor(settings.selectionRange.endDate.getTime() / 1000);
             } else {
-                args["after"] = Math.floor(new Date(settings.start).getTime() / 1000);
-                args["before"] = Math.floor(new Date(settings.end).getTime() / 1000);
+                args["after"] = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
+                args["before"] = Math.floor(settings.selectionRange.endDate.getTime() / 1000);
             }
         }
         if (settings.sort) {

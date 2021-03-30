@@ -16,16 +16,79 @@ body {
 .facet:focus button.only {
 	visibility: visible;
 }
+.reddit-comment ul,
+.reddit-comment ol {
+	padding-left: 2rem;
+	margin: 0.5rem 0;
+}
+.reddit-comment ul {
+	list-style-type: disc;
+}
+.reddit-comment ol {
+	list-style-type: decimal;
+}
+.reddit-comment table {
+	margin: 0.5rem 0;
+}
+.reddit-comment table th,
+.reddit-comment table td {
+	border: 1px solid #CBD5E0; /* gray-400 */
+	padding: 0.25rem 0.5rem;
+}
+.reddit-comment blockquote {
+	border-left: 2px solid #A0AEC0; /* gray-500 */
+	margin: 0.25rem;
+	padding: 0 0.5rem;
+	color: #4A5568; /* gray-700 */
+}
+.reddit-comment blockquote ul,
+.reddit-comment blockquote ol {
+	margin: 0;
+}
+.reddit-comment blockquote + blockquote {
+	margin-top: -0.25rem;
+}
 .loader {
-  border-top-color: #3498db;
-  -webkit-animation: spinner 1.5s linear infinite;
-  animation: spinner 1.5s linear infinite;
+ 	border-top-color: #3498db;
+ 	-webkit-animation: spinner 1.5s linear infinite;
+	animation: spinner 1.5s linear infinite;
 }
 @-webkit-keyframes spinner {
-  0% { -webkit-transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); }
+ 	0% { -webkit-transform: rotate(0deg); }
+ 	100% { -webkit-transform: rotate(360deg); }
 }
 @keyframes spinner {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+.customize-date-range .rdrCalendarWrapper {
+	font-size: 0.875rem;
+	border-radius: 0.25rem;
+}
+.customize-date-range .rdrDateDisplayWrapper {
+	border-radius: 0.25rem;
+}
+.customize-date-range .rdrDateDisplay {
+	margin: 0.75rem;
+}
+.customize-date-range .rdrMonthAndYearWrapper,
+.customize-date-range .rdrMonths {
+	font-size: 0.75rem;
+}
+.customize-date-range .rdrMonthAndYearWrapper {
+	padding: 0.25rem 0;
+	height: auto;
+}
+.customize-date-range .rdrMonth {
+    padding: 0 0.75rem 0.5rem 0.75rem;
+}
+.customize-date-range .rdrMonthAndYearPickers select {
+	padding: 0.5rem 1.5rem 0.5rem 0.75rem;
+}
+.customize-date-range .rdrDateDisplayItem + .rdrDateDisplayItem {
+    margin-left: 0.75rem;
+}
+.customize-date-range .rdrCalendarWrapper.rdrDateRangeWrapper,
+.customize-date-range .rdrMonth {
+	width: 100%;
 }
