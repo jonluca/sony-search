@@ -15,14 +15,15 @@ import { SearchHelp } from './help';
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 
-const isDevMode = (location.hostname !== "garettg.github.io");
+const isDevMode = (location.hostname !== "garettg.github.io" && location.hostname !== "churning.io");
 
 ReactGA.initialize('UA-171174933-1', {
     titleCase: false,
     debug: isDevMode,
     testMode: isDevMode
 });
-if ( !isDevMode ){
+
+if (!isDevMode) {
     ReactGA.pageview(window.location.pathname);
 }
 
@@ -48,7 +49,7 @@ export class App extends React.Component<{}, AppState> {
                 startDate: subDays(new Date(), 7),
                 endDate: new Date(),
                 key: "selection"
-            }
+            },
             sort: "desc",
             score: "",
             threadType: {},
@@ -96,7 +97,7 @@ export class App extends React.Component<{}, AppState> {
 
         // Load stored form data if exists
         let localStorageData = utils.decompress(localStorage.getItem("churning-search"));
-        if ( !isEmpty(localStorageData) ) {
+        if (!isEmpty(localStorageData)) {
             this.loadSavedState(localStorageData);
             console.log("Loaded state from local storage");
         }
@@ -246,7 +247,7 @@ export class App extends React.Component<{}, AppState> {
                 }
             });
 
-            if ( data.length > 0 ) {
+            if (data.length > 0) {
                 for (let i = 0, len = data.length; i < len; i++) {
                     let permalink = data[i].permalink;
                     switch (true) {
@@ -265,7 +266,7 @@ export class App extends React.Component<{}, AppState> {
                         case /manufactured_spending_weekly_/.test(permalink):
                             data[i].thread = "Manufactured Spend";
                             break;
-                        case /(data_points_central_|data_points_weekly_)/.test(permalink):
+                        case /(data_points_central_|data_points_weekly_|dq_thread_)/.test(permalink):
                             data[i].thread = "Data Points";
                             break;
                         case /what_card_should_i_get_/.test(permalink):
@@ -294,7 +295,7 @@ export class App extends React.Component<{}, AppState> {
                     if (thread === "") {
                         thread = "None";
                     }
-                    if ( !isEmpty(this.lastThreadType) && this.lastThreadType.hasOwnProperty(thread) ) {
+                    if (!isEmpty(this.lastThreadType) && this.lastThreadType.hasOwnProperty(thread)) {
                         threadOptions[thread] = this.lastThreadType[thread];
                     } else {
                         threadOptions[thread] = true;
@@ -387,7 +388,7 @@ export class App extends React.Component<{}, AppState> {
      * @return {React.ReactNode} The react node for the app
      */
     render(): React.ReactNode {
-        let linkClass = "text-blue-700 hover:text-blue-500 hover:underline";
+        let linkClass = "text-blue-700 hover:text-blue-500 dark:text-cyan-700 dark:hover:text-cyan-500 hover:underline";
         let inputProps = {
             "autoComplete": "off",
             "autoCorrect": "off",
@@ -400,16 +401,17 @@ export class App extends React.Component<{}, AppState> {
         let filterCount;
         let inner;
 
-        const infoText = <>
-            <p>Maintained by <a href="https://www.reddit.com/user/garettg/"
-                className={linkClass + " no-underline hover:underline"}
-                target="_blank"
-                onClick={(e) => this.handleOutboundClick(e)}>garettg</a></p>
-            <p><a href="https://www.reddit.com/message/compose/?to=garettg&subject=Churning+Search"
-                target="_blank"
-                className={linkClass + " no-underline hover:underline"}
-                onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a></p>
-        </>;
+        const infoText =
+            <>
+                <p>Maintained by <a href="https://www.reddit.com/user/garettg/"
+                    className={linkClass + " no-underline hover:underline"}
+                    target="_blank"
+                    onClick={(e) => this.handleOutboundClick(e)}>garettg</a></p>
+                <p><a href="https://www.reddit.com/message/compose/?to=garettg&subject=Churning+Search"
+                    target="_blank"
+                    className={linkClass + " no-underline hover:underline"}
+                    onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a></p>
+            </>;
 
         if (this.state.comments) {
             let threadsOptions = Object.entries(this.state.threadType)
@@ -418,7 +420,7 @@ export class App extends React.Component<{}, AppState> {
                     <li className="facet flex items-baseline" key={i}>
                         <label className="inline-block text-black cursor-pointer relative pl-6 pr-1">
                             <span className="absolute left-0 inset-y-0 flex items-center">
-                                <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} className="form-checkbox" />
+                                <input type="checkbox" value={key} checked={value} onChange={this.handleThreadsChange} className="form-checkbox rounded-md" />
                             </span>
                             <span className="text-sm">{key}</span>
                         </label>
@@ -435,10 +437,10 @@ export class App extends React.Component<{}, AppState> {
                 } else {
                     return (selected.indexOf(comment.thread) >= 0)
                 }
-	  		);
+            });
             filterCount = results.length;
             // Render comments
-            inner = results.map((comment) => {
+            inner = results.map((comment, index) => {
                 if (!comment) {
                     return;
                 }
@@ -452,11 +454,11 @@ export class App extends React.Component<{}, AppState> {
 
                 let threadBadge;
                 if (comment.thread) {
-                    threadBadge = <div className="bg-blue-600 rounded-full px-3 py-1 text-xs text-white">{comment.thread}</div>;
+                    threadBadge = <div className="bg-blue-600 dark:bg-cyan-600 rounded-full px-3 py-1 text-xs text-white">{comment.thread}</div>;
                 }
 
                 return (
-                    <div className="w-full rounded bg-gray-200 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
+                    <div className="w-full rounded-md bg-gray-100 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                 target="_blank"
@@ -471,7 +473,7 @@ export class App extends React.Component<{}, AppState> {
                         </div>
                         <a href={`https://www.reddit.com${permalink}?context=1`}
                             onClick={(e) => this.handleResultClick(e, comment)}
-                            className="block text-sm leading-5 py-4 px-1 reddit-comment" target="_blank">
+                            className="block text-sm leading-5 py-4 px-2 reddit-comment" target="_blank">
                             <ReactMarkdown
                                 source={comment.body.replace(/^(?:&gt;)/gm, "\n>")}
                                 plugins={[gfm]}
@@ -481,7 +483,7 @@ export class App extends React.Component<{}, AppState> {
                         </a>
                         <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
                             {threadBadge}
-                            <span className="bg-blue-900 rounded-full px-3 py-1 text-xs text-white"
+                            <span className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white"
                                 title={new Date(comment.created_utc * 1000).toLocaleString()}>
                                 {ta.ago((comment.created_utc * 1000))}
                             </span>
@@ -493,7 +495,7 @@ export class App extends React.Component<{}, AppState> {
             let selectAll;
             if (!allChecked) {
                 selectAll =
-                    <button className={"text-xs focus:outline-none hidden lg:block " + linkClass}
+                    <button className="text-xs focus:outline-none hidden lg:block text-blue-700 hover:text-blue-500 dark:text-cyan-500 dark:hover:text-cyan-300 hover:underline"
                         onClick={this.handleThreadsAll}>
                         Select All
 		  			</button>;
@@ -502,10 +504,10 @@ export class App extends React.Component<{}, AppState> {
                 facets =
                     <div className="mt-8 mb-4">
                         <div className="flex justify-between items-center mb-1">
-                            <label className="text-gray-700 text-xs font-bold ">Threads Filter</label>
+                            <label className="text-gray-700 dark:text-gray-400 text-xs font-bold ">Threads Filter</label>
                             {selectAll}
                         </div>
-                        <ul className="py-2 px-4 block w-full bg-gray-200 border border-gray-200 text-gray-700 rounded">
+                        <ul className="py-2 px-4 block w-full bg-gray-100 border border-gray-200 text-gray-700 rounded-md">
                             {threadsFilter}
                         </ul>
                     </div>;
@@ -533,7 +535,7 @@ export class App extends React.Component<{}, AppState> {
                             </button>
                         </div>
                     </div>
-                    <div className="p-4 flex-1 overflow-y-scroll">
+                    <div className="p-4 md:px-6 lg:px-8 flex-1 overflow-y-scroll">
                         {inner}
                         <div className="text-center font-bold text-lg py-4">
                             {resultCount > 0 ? `End of Results` : `No Results Found`}
@@ -574,37 +576,35 @@ export class App extends React.Component<{}, AppState> {
         // Combine everything and return
         return (
             <div className="md:h-screen md:flex">
-                <div className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 overflow-y-auto md:flex md:flex-col">
+                <div className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-800 shadow-lg overflow-y-auto md:flex md:flex-col">
                     <div>
                         <form onSubmit={this.searchSubmit}>
-                            <div>
-                                <h1 className="text-2xl">Churning Search</h1>
-                            </div>
+                            <h1 className="text-2xl text-gray-700 dark:text-gray-300 font-mono tracking-tighter">Churning Search</h1>
                             {/* Search Query */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 text-xs font-bold mb-1">Search</label>
+                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Search</label>
                                 <input onChange={this.handleQueryChange}
                                     value={this.state.query}
-                                    className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                    className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                     {...inputProps}
                                 />
                             </div>
                             {/* Author */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 text-xs font-bold mb-1">Author</label>
+                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Author</label>
                                 <input onChange={this.handleAuthorChange}
                                     value={this.state.author}
-                                    className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                    className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                     {...inputProps}
                                 />
                             </div>
                             {/* Time Range */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 text-xs font-bold mb-1">Time Range</label>
+                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Time Range</label>
                                 <div className="relative">
                                     <select onChange={this.handleTimeChange}
                                         value={this.state.time}
-                                        className="form-select block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-gray-500 focus:outline-none">
+                                        className="form-select rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none">
                                         {
                                             Object.entries(SearchRange).map(([key, obj], index) => {
                                                 return (
@@ -620,7 +620,7 @@ export class App extends React.Component<{}, AppState> {
                             <div className={`mt-2 customize-date-range ${this.state.time === "" ? 'block' : 'hidden'}`}>
                                 <DateRange
                                     editableDateInputs={false}
-                                    onChange={(item) => this.setState({selectionRange: item.selection})}
+                                    onChange={(item) => this.setState({ selectionRange: item.selection })}
                                     moveRangeOnFirstSelection={false}
                                     minDate={new Date(2012, 11, 11, 0, 0, 0, 0)}
                                     maxDate={new Date()}
@@ -631,11 +631,11 @@ export class App extends React.Component<{}, AppState> {
                             <div className="mt-2 grid grid-cols-2 gap-4">
                                 {/* Sort Direction */}
                                 <div className="col-span-1">
-                                    <label className="block text-gray-700 text-xs font-bold mb-1">Sort Order</label>
+                                    <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Sort Order</label>
                                     <div className="relative">
                                         <select onChange={this.handleSortDirectionChange}
                                             value={this.state.sort}
-                                            className="form-select block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-gray-500 focus:outline-none">
+                                            className="form-select rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none">
                                             <option value="desc">Newest</option>
                                             <option value="asc">Oldest</option>
                                         </select>
@@ -643,22 +643,23 @@ export class App extends React.Component<{}, AppState> {
                                 </div>
                                 {/* Score */}
                                 <div className="col-span-1">
-                                    <label className="block text-gray-700 text-xs font-bold mb-1">Minimum Score</label>
+                                    <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Minimum Score</label>
                                     <input onChange={this.handleScoreChange}
                                         value={this.state.score}
-                                        className="form-input block w-full text-sm text-gray-700 bg-gray-200 focus:bg-white border-gray-200 focus:border-blue-400 focus:outline-none"
+                                        className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                         placeholder="e.g. 1"
                                         {...inputProps}
                                     />
                                 </div>
                             </div>
-
-                            {/* Submit Button and Error text */}
-                            <button type="submit"
-                                disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
-                                className={"w-full rounded bg-blue-900 text-white font-bold mt-4 py-2 text-lg " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700')}>
-                                <span>{this.state.searching ? "Searching..." : "Search"}</span>
-                            </button>
+                            {/* Submit Button */}
+                            <div className="mt-4">
+                                <button type="submit"
+                                    disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
+                                    className={"w-full rounded-md text-lg px-4 py-2 font-semibold tracking-wider text-white bg-blue-900 dark:bg-cyan-800 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-cyan-600')}>
+                                    <span>{this.state.searching ? "Searching..." : "Search"}</span>
+                                </button>
+                            </div>
                         </form>
                         {facets}
                     </div>

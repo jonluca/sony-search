@@ -7,7 +7,7 @@ body {
 	min-width: 320px;
 }
 .facet {
-	line-height: 1.5rem;
+	line-height: 1.75rem;
 }
 .facet button.only {
 	visibility: hidden;
@@ -32,14 +32,14 @@ body {
 }
 .reddit-comment table th,
 .reddit-comment table td {
-	border: 1px solid #CBD5E0; /* gray-400 */
+	border: 1px solid #ccc;
 	padding: 0.25rem 0.5rem;
 }
 .reddit-comment blockquote {
-	border-left: 2px solid #A0AEC0; /* gray-500 */
+	border-left: 2px solid #ccc;
 	margin: 0.25rem;
 	padding: 0 0.5rem;
-	color: #4A5568; /* gray-700 */
+	color: #666;
 }
 .reddit-comment blockquote ul,
 .reddit-comment blockquote ol {
@@ -49,9 +49,14 @@ body {
 	margin-top: -0.25rem;
 }
 .loader {
- 	border-top-color: #3498db;
+ 	border-top-color: rgb(2, 132, 199);
  	-webkit-animation: spinner 1.5s linear infinite;
 	animation: spinner 1.5s linear infinite;
+}
+@media (prefers-color-scheme: dark) {
+	.loader {
+		border-top-color: rgb(8, 145, 178);
+	}
 }
 @-webkit-keyframes spinner {
  	0% { -webkit-transform: rotate(0deg); }
