@@ -17,6 +17,8 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const isDevMode = (location.hostname !== "garettg.github.io" && location.hostname !== "churning.io");
 
+const useBeta = false;
+
 ReactGA.initialize('UA-171174933-1', {
     titleCase: false,
     debug: isDevMode,
@@ -228,14 +230,18 @@ export class App extends React.Component<{}, AppState> {
     doSearch = async () => {
         this.setState({ threadType: {}, error: null, comments: null, searching: true });
         this.lastSearch = { ...this.state };
-
+        
         // Search
         try {
             let threadOptions = {};
             let url1 = this.api.get_url(this.lastSearch, false);
             let data1 = await this.api.query(url1);
-            let url2 = this.api.get_url(this.lastSearch, true);
-            let data2 = await this.api.query(url2);
+            let data2 = [];
+            if (useBeta) {
+                let url2 = this.api.get_url(this.lastSearch, true);
+                data2 = await this.api.query(url2);
+            }
+
             let data = Object.values(data1.concat(data2).reduce((r, o) => {
                 r[o.id] = o;
                 return r;
