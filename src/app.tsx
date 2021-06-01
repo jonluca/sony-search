@@ -119,6 +119,13 @@ export class App extends React.Component<{}, AppState> {
 
     setError = (error: string) => {
         this.setState({ error: error });
+        console.error("PushshiftAPI Error","\n", error);
+        if (!isDevMode) {
+            ReactGA.exception({
+                description: error,
+                fatal: false
+            })
+        }
     }
 
     handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,134 +237,130 @@ export class App extends React.Component<{}, AppState> {
     doSearch = async () => {
         this.setState({ threadType: {}, error: null, comments: null, searching: true });
         this.lastSearch = { ...this.state };
-        
-        // Search
+        let threadOptions = {};
+        let data1 = [], data2 = [];
+
+        let url1 = this.api.get_url(this.lastSearch, false);
+        let url2 = this.api.get_url(this.lastSearch, true);
+
         try {
-            let threadOptions = {};
-            let url1 = this.api.get_url(this.lastSearch, false);
-            let data1 = await this.api.query(url1);
-            let data2 = [];
-            if (useBeta) {
-                let url2 = this.api.get_url(this.lastSearch, true);
-                data2 = await this.api.query(url2);
+            data1 = await this.api.query(url1);
+        } catch (error) {
+            this.setError(`Prod: ${String(error)}`);
+        }
+
+        try {
+            data2 = await this.api.query(url2);
+        } catch (error) {
+            this.setError(`Beta: ${String(error)}`);
+        }
+
+        let data = Object.values(data1.concat(data2).reduce((r, o) => {
+            r[o.id] = o;
+            return r;
+        }, {})).sort((a, b) => {
+            if (this.state.sort === "asc") {
+                return a.created_utc - b.created_utc;
+            } else {
+                return b.created_utc - a.created_utc;
+            }
+        });
+
+        if (data.length > 0) {
+            for (let i = 0, len = data.length; i < len; i++) {
+                let permalink = data[i].permalink;
+                switch (true) {
+                    case /_megathread/.test(permalink):
+                        data[i].thread = "Megathread";
+                        break;
+                    case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
+                        data[i].thread = "Bank Account Bonus";
+                        break;
+                    case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
+                        data[i].thread = "Daily Question";
+                        break;
+                    case /(discussion_thread_|daily_discussion_)/.test(permalink):
+                        data[i].thread = "Daily Discussion";
+                        break;
+                    case /manufactured_spending_weekly_/.test(permalink):
+                        data[i].thread = "Manufactured Spend";
+                        break;
+                    case /(data_points_central_|data_points_weekly_|dq_thread_)/.test(permalink):
+                        data[i].thread = "Data Points";
+                        break;
+                    case /what_card_should_i_get_/.test(permalink):
+                        data[i].thread = "What Card Should I Get";
+                        break;
+                    case /frustration_friday_/.test(permalink):
+                        data[i].thread = "Frustration";
+                        break;
+                    case /mods_choice_/.test(permalink):
+                        data[i].thread = "Mod's Choice";
+                        break;
+                    case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
+                        data[i].thread = "Off Topic";
+                        break;
+                    case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
+                        data[i].thread = "Trip Report/Success";
+                        break;
+                    default:
+                        data[i].thread = "";
+                }
             }
 
-            let data = Object.values(data1.concat(data2).reduce((r, o) => {
-                r[o.id] = o;
-                return r;
-            }, {})).sort((a, b) => {
-                if (this.state.sort === "asc") {
-                    return a.created_utc - b.created_utc;
+            // Build a list of unique threads and sort
+            let threadsList = data.map(c => c.thread).filter((x, i, a) => a.indexOf(x) == i).sort();
+            threadsList.map(thread => {
+                if (thread === "") {
+                    thread = "None";
+                }
+                if (!isEmpty(this.lastThreadType) && this.lastThreadType.hasOwnProperty(thread)) {
+                    threadOptions[thread] = this.lastThreadType[thread];
                 } else {
-                    return b.created_utc - a.created_utc;
+                    threadOptions[thread] = true;
                 }
             });
+        }
 
-            if (data.length > 0) {
-                for (let i = 0, len = data.length; i < len; i++) {
-                    let permalink = data[i].permalink;
-                    switch (true) {
-                        case /_megathread/.test(permalink):
-                            data[i].thread = "Megathread";
-                            break;
-                        case /(bank_account_bonus_week_|bank_bonus_weekly_)/.test(permalink):
-                            data[i].thread = "Bank Account Bonus";
-                            break;
-                        case /(question_thread_|newbie_question_weekly_|newbie_weekly_question_)/.test(permalink):
-                            data[i].thread = "Daily Question";
-                            break;
-                        case /(discussion_thread_|daily_discussion_)/.test(permalink):
-                            data[i].thread = "Daily Discussion";
-                            break;
-                        case /manufactured_spending_weekly_/.test(permalink):
-                            data[i].thread = "Manufactured Spend";
-                            break;
-                        case /(data_points_central_|data_points_weekly_|dq_thread_)/.test(permalink):
-                            data[i].thread = "Data Points";
-                            break;
-                        case /what_card_should_i_get_/.test(permalink):
-                            data[i].thread = "What Card Should I Get";
-                            break;
-                        case /frustration_friday_/.test(permalink):
-                            data[i].thread = "Frustration";
-                            break;
-                        case /mods_choice_/.test(permalink):
-                            data[i].thread = "Mod's Choice";
-                            break;
-                        case /(weekly_offtopic_thread_|weekly_off_topic_thread_|anything_goes_thread_)/.test(permalink):
-                            data[i].thread = "Off Topic";
-                            break;
-                        case /(trip_report_and_churning_success_|trip_reports_and_churning_success_|storytime_weekly_|trip_report_weekly_)/.test(permalink):
-                            data[i].thread = "Trip Report/Success";
-                            break;
-                        default:
-                            data[i].thread = "";
-                    }
-                }
-
-                // Build a list of unique threads and sort
-                let threadsList = data.map(c => c.thread).filter((x, i, a) => a.indexOf(x) == i).sort();
-                threadsList.map(thread => {
-                    if (thread === "") {
-                        thread = "None";
-                    }
-                    if (!isEmpty(this.lastThreadType) && this.lastThreadType.hasOwnProperty(thread)) {
-                        threadOptions[thread] = this.lastThreadType[thread];
-                    } else {
-                        threadOptions[thread] = true;
-                    }
+        let toStats = {
+            query: this.state.query,
+            author: this.state.author,
+            after: this.state.time, // keeping same key name even though state key changed
+            start: format(this.state.selectionRange.startDate, 'P'),
+            end: format(this.state.selectionRange.endDate, 'P'),
+            sort: this.state.sort,
+            score: this.state.score
+        };
+        for (const [key, value] of Object.entries(toStats)) {
+            if (value !== "" && !isDevMode) {
+                ReactGA.event({
+                    nonInteraction: true,
+                    category: 'Search',
+                    action: key,
+                    label: value
                 });
             }
-
-            let toStats = {
-                query: this.state.query,
-                author: this.state.author,
-                after: this.state.time, // keeping same key name even though state key changed
-                start: format(this.state.selectionRange.startDate, 'P'),
-                end: format(this.state.selectionRange.endDate, 'P'),
-                sort: this.state.sort,
-                score: this.state.score
-            };
-            for (const [key, value] of Object.entries(toStats)) {
-                if (value !== "" && !isDevMode) {
-                    ReactGA.event({
-                        nonInteraction: true,
-                        category: 'Search',
-                        action: key,
-                        label: value
-                    });
-                }
-                if (key === 'query') {
-                    const regex = /[\"\'\|\(\)*’&]|(\s\,|\,\s|\+|\s\-|\s\%\s|\s\>\s|\s\<\s|\sor\s|\sOR\s|\sand\s|\sAND\s)/gi;
-                    let keywords = value.replace(regex, ' ').replace(/\s\s+/g, ' ').trim().toLowerCase().split(" ");
-                    keywords.map(term => {
-                        if (!isDevMode) {
-                            ReactGA.event({
-                                nonInteraction: true,
-                                category: 'Search',
-                                action: 'keyword',
-                                label: term
-                            });
-                        }
-                    })
-                }
-            }
-            // Reset the last threadType
-            this.lastThreadType = {};
-            // Update state with results
-            this.setState({ comments: data, threadType: threadOptions, searching: false });
-            let resultsPanel = document.getElementById("results-panel");
-            resultsPanel.scrollIntoView();
-        } catch (err) {
-            this.setState({ searching: false });
-            this.setError(String(err));
-            if (!isDevMode) {
-                ReactGA.exception({
-                    description: String(err),
-                    fatal: true
+            if (key === 'query') {
+                const regex = /[\"\'\|\(\)*’&]|(\s\,|\,\s|\+|\s\-|\s\%\s|\s\>\s|\s\<\s|\sor\s|\sOR\s|\sand\s|\sAND\s)/gi;
+                let keywords = value.replace(regex, ' ').replace(/\s\s+/g, ' ').trim().toLowerCase().split(" ");
+                keywords.map(term => {
+                    if (!isDevMode) {
+                        ReactGA.event({
+                            nonInteraction: true,
+                            category: 'Search',
+                            action: 'keyword',
+                            label: term
+                        });
+                    }
                 })
             }
         }
+        // Reset the last threadType
+        this.lastThreadType = {};
+        // Update state with results
+        this.setState({ comments: data, threadType: threadOptions, searching: false });
+        let resultsPanel = document.getElementById("results-panel");
+        resultsPanel.scrollIntoView();
     }
 
     /** Handle the main form being submitted */
@@ -546,6 +549,14 @@ export class App extends React.Component<{}, AppState> {
                         <div className="text-center font-bold text-lg py-4">
                             {resultCount > 0 ? `End of Results` : `No Results Found`}
                         </div>
+                        {this.state.error &&
+                            <div className="flex items-start bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded" role="alert">
+                                <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div className="font-bold">Error: {this.state.error}</div>
+                            </div>
+                        }
                         <div className="text-center text-xs py-4">
                             {infoText}
                         </div>
