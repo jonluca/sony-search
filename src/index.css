@@ -6,6 +6,13 @@
 body {
 	min-width: 320px;
 }
+input.custom-toggle:checked ~ .dot {
+	transform: translateX(100%);
+	background-color: rgba(234,88,12,1);
+}
+.no-underline {
+    text-decoration: none !important;
+}
 .facet {
 	line-height: 1.75rem;
 }

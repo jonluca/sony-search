@@ -17,8 +17,6 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const isDevMode = (location.hostname !== "garettg.github.io" && location.hostname !== "churning.io");
 
-const useBeta = false;
-
 ReactGA.initialize('UA-171174933-1', {
     titleCase: false,
     debug: isDevMode,
@@ -54,6 +52,8 @@ export class App extends React.Component<{}, AppState> {
             },
             sort: "desc",
             score: "",
+            old: false, // whether to use old or www reddit links
+            showDate: false,
             threadType: {},
             error: null,
             searching: false,
@@ -112,19 +112,22 @@ export class App extends React.Component<{}, AppState> {
             time: this.state.time,
             selectionRange: this.state.selectionRange,
             sort: this.state.sort,
-            score: this.state.score
+            score: this.state.score,
+            old: this.state.old,
+            showDate: this.state.showDate
         };
         localStorage.setItem("churning-search", utils.compress(toSave));
     }
 
     setError = (error: string) => {
         this.setState({ error: error });
-        console.error("PushshiftAPI Error","\n", error);
         if (!isDevMode) {
             ReactGA.exception({
                 description: error,
                 fatal: false
             })
+        } else {
+            console.error("PushshiftAPI Error", "\n", error);
         }
     }
 
@@ -154,6 +157,14 @@ export class App extends React.Component<{}, AppState> {
 
     handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         this.setState({ score: e.target.value });
+    }
+
+    handleOldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        this.setState({ old: e.target.checked });
+    }
+
+    toggleDate = () => {
+        this.setState({ showDate: !this.state.showDate });
     }
 
     handleThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,7 +266,7 @@ export class App extends React.Component<{}, AppState> {
             this.setError(`Beta: ${String(error)}`);
         }
 
-        let data = Object.values(data1.concat(data2).reduce((r, o) => {
+        let data = Object.values(data2.concat(data1).reduce((r, o) => {
             r[o.id] = o;
             return r;
         }, {})).sort((a, b) => {
@@ -375,7 +386,7 @@ export class App extends React.Component<{}, AppState> {
     }
 
     shareResults = () => {
-        let { error, searching, comments, ...toShare } = this.state;
+        let { error, searching, comments, old, showDate, ...toShare } = this.state;
         let shareUrl = `${window.location.href}#${utils.compress(toShare)}`;
         let shareInput = document.body.appendChild(document.createElement("input"));
         shareInput.value = shareUrl;
@@ -412,11 +423,11 @@ export class App extends React.Component<{}, AppState> {
 
         const infoText =
             <>
-                <p>Maintained by <a href="https://www.reddit.com/user/garettg/"
+                <p>Maintained by <a href={`https://${this.state.old ? 'old' : 'www'}.reddit.com/user/garettg/`}
                     className={linkClass + " no-underline hover:underline"}
                     target="_blank"
                     onClick={(e) => this.handleOutboundClick(e)}>garettg</a></p>
-                <p><a href="https://www.reddit.com/message/compose/?to=garettg&subject=Churning+Search"
+                <p><a href={`https://${this.state.old ? 'old' : 'www'}.reddit.com/message/compose/?to=garettg&subject=Churning+Search`}
                     target="_blank"
                     className={linkClass + " no-underline hover:underline"}
                     onClick={(e) => this.handleOutboundClick(e)}>PM with comments, suggestions, issues</a></p>
@@ -466,13 +477,22 @@ export class App extends React.Component<{}, AppState> {
                     threadBadge = <div className="bg-blue-600 dark:bg-cyan-600 rounded-full px-3 py-1 text-xs text-white">{comment.thread}</div>;
                 }
 
+                let timeAgo = ta.ago((comment.created_utc * 1000));
+                let date = format(new Date(comment.created_utc * 1000), "M/d/yy h:mm aaa");
+                let timeText = timeAgo;
+                let timeTitle = date;
+                if (this.state.showDate) {
+                    timeText = date;
+                    timeTitle = timeAgo;
+                }
+
                 return (
                     <div className="w-full rounded-md bg-gray-100 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                 target="_blank"
                                 onClick={(e) => this.handleAuthorClick(e, comment)}
-                                href={`https://www.reddit.com/u/${comment.author}`}>
+                                href={`https://${this.state.old ? 'old' : 'www'}.reddit.com/u/${comment.author}`}>
                                 {comment.author}
                             </a>
                             <span className="bg-orange-600 rounded-full px-3 py-1 text-xs text-white"
@@ -480,7 +500,7 @@ export class App extends React.Component<{}, AppState> {
                                 {comment.score}
                             </span>
                         </div>
-                        <a href={`https://www.reddit.com${permalink}?context=1`}
+                        <a href={`https://${this.state.old ? 'old' : 'www'}.reddit.com${permalink}?context=1`}
                             onClick={(e) => this.handleResultClick(e, comment)}
                             className="block text-sm leading-5 py-4 px-2 reddit-comment" target="_blank">
                             <ReactMarkdown
@@ -492,9 +512,10 @@ export class App extends React.Component<{}, AppState> {
                         </a>
                         <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
                             {threadBadge}
-                            <span className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white"
-                                title={new Date(comment.created_utc * 1000).toLocaleString()}>
-                                {ta.ago((comment.created_utc * 1000))}
+                            <span className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white cursor-pointer"
+                                onClick={this.toggleDate}
+                                title={timeTitle}>
+                                {timeText}
                             </span>
                         </div>
                     </div>
@@ -513,7 +534,7 @@ export class App extends React.Component<{}, AppState> {
                 facets =
                     <div className="mt-8 mb-4">
                         <div className="flex justify-between items-center mb-1">
-                            <label className="text-gray-700 dark:text-gray-400 text-xs font-bold ">Threads Filter</label>
+                            <label className="text-gray-700 dark:text-gray-300 text-xs font-bold ">Threads Filter</label>
                             {selectAll}
                         </div>
                         <ul className="py-2 px-4 block w-full bg-gray-100 border border-gray-200 text-gray-700 rounded-md">
@@ -578,7 +599,7 @@ export class App extends React.Component<{}, AppState> {
                                 </div>
                             }
                             <div className="text-center py-4">
-                                Search <a href="https://www.reddit.com/r/churning" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using
+                                Search <a href={`https://${this.state.old ? 'old' : 'www'}.reddit.com/r/churning`} className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>r/churning</a> using
                                 the <a href="https://pushshift.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>pushshift.io API</a>, the same source
                                 as <a href="https://redditsearch.io/" className={linkClass} onClick={(e) => this.handleOutboundClick(e)}>redditsearch.io</a>.
                             </div>
@@ -599,8 +620,9 @@ export class App extends React.Component<{}, AppState> {
                             <h1 className="text-2xl text-gray-700 dark:text-gray-300 font-mono tracking-tighter">Churning Search</h1>
                             {/* Search Query */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Search</label>
+                                <label className="block text-gray-700 dark:text-gray-300 text-xs font-bold mb-1" for="search-query">Search</label>
                                 <input onChange={this.handleQueryChange}
+                                    id="search-query"
                                     value={this.state.query}
                                     className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                     {...inputProps}
@@ -608,8 +630,9 @@ export class App extends React.Component<{}, AppState> {
                             </div>
                             {/* Author */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Author</label>
+                                <label className="block text-gray-700 dark:text-gray-300 text-xs font-bold mb-1" for="author">Author</label>
                                 <input onChange={this.handleAuthorChange}
+                                    id="author"
                                     value={this.state.author}
                                     className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                     {...inputProps}
@@ -617,9 +640,10 @@ export class App extends React.Component<{}, AppState> {
                             </div>
                             {/* Time Range */}
                             <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Time Range</label>
+                                <label className="block text-gray-700 dark:text-gray-300 text-xs font-bold mb-1" for="time-range">Time Range</label>
                                 <div className="relative">
                                     <select onChange={this.handleTimeChange}
+                                        id="time-range"
                                         value={this.state.time}
                                         className="form-select rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none">
                                         {
@@ -645,12 +669,13 @@ export class App extends React.Component<{}, AppState> {
                                     rangeColors={['#3182ce', '#3ecf8e', '#fed14c']}
                                 />
                             </div>
-                            <div className="mt-2 grid grid-cols-2 gap-4">
+                            <div className="mt-2 grid grid-cols-8 gap-3">
                                 {/* Sort Direction */}
-                                <div className="col-span-1">
-                                    <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Sort Order</label>
+                                <div className="col-span-3">
+                                    <label className="block text-gray-700 dark:text-gray-300 text-xs font-bold truncate mb-1" for="sort-order">Sort By</label>
                                     <div className="relative">
                                         <select onChange={this.handleSortDirectionChange}
+                                            id="sort-order"
                                             value={this.state.sort}
                                             className="form-select rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none">
                                             <option value="desc">Newest</option>
@@ -659,14 +684,26 @@ export class App extends React.Component<{}, AppState> {
                                     </div>
                                 </div>
                                 {/* Score */}
-                                <div className="col-span-1">
-                                    <label className="block text-gray-700 dark:text-gray-400 text-xs font-bold mb-1">Minimum Score</label>
+                                <div className="col-span-3">
+                                    <label className="block text-gray-700 dark:text-gray-300 text-xs font-bold truncate mb-1" for="min-score"><abbr title="Minimum" className="no-underline">Min</abbr> Score</label>
                                     <input onChange={this.handleScoreChange}
+                                        id="min-score"
                                         value={this.state.score}
                                         className="form-input rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none"
                                         placeholder="e.g. 1"
                                         {...inputProps}
                                     />
+                                </div>
+                                {/* Old Reddit Toggle */}
+                                <div className="col-span-2">
+                                    <label for="toggle-old" class="block cursor-pointer">
+                                        <div class="text-gray-700 dark:text-gray-300 text-xs font-bold truncate mb-1">Old Reddit</div>
+                                        <div class="relative mt-4 mx-2">
+                                            <input id="toggle-old" type="checkbox" checked={this.state.old} onChange={this.handleOldChange} class="sr-only custom-toggle" />
+                                            <div class="w-8 h-3 bg-gray-300 rounded-full shadow-inner"></div>
+                                            <div class="dot absolute w-5 h-5 bg-white rounded-full shadow -left-1 -top-1 transition"></div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             {/* Submit Button */}
