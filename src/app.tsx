@@ -252,7 +252,7 @@ export class App extends React.Component<{}, AppState> {
         let data1 = [], data2 = [];
 
         let url1 = this.api.get_url(this.lastSearch, false);
-        let url2 = this.api.get_url(this.lastSearch, true);
+        // let url2 = this.api.get_url(this.lastSearch, true);
 
         try {
             data1 = await this.api.query(url1);
@@ -260,13 +260,15 @@ export class App extends React.Component<{}, AppState> {
             this.setError(`Prod: ${String(error)}`);
         }
 
+        /*
         try {
             data2 = await this.api.query(url2);
         } catch (error) {
             this.setError(`Beta: ${String(error)}`);
         }
+        */
 
-        let data = Object.values(data2.concat(data1).reduce((r, o) => {
+        let data = Object.values(data1.concat(data2).reduce((r, o) => {
             r[o.id] = o;
             return r;
         }, {})).sort((a, b) => {
