@@ -8,7 +8,10 @@ export interface SearchSettings {
     time: string,
     selectionRange: object
     sort: string,
-    score: number
+    score: number,
+    old: boolean,
+    showDate: boolean,
+    threadType: object
 }
 
 export const SearchRange = {
@@ -48,12 +51,14 @@ export class PushshiftAPI {
                 args["after"] = settings.time;
             }
         } else {
+            let startDate = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
+            let endDate = Math.floor(settings.selectionRange.endDate.setHours(23, 59, 59, 999) / 1000);
             if (beta) {
-                args["min_created_utc"] = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
-                args["max_created_utc"] = Math.floor(settings.selectionRange.endDate.getTime() / 1000);
+                args["min_created_utc"] = startDate
+                args["max_created_utc"] = endDate;
             } else {
-                args["after"] = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
-                args["before"] = Math.floor(settings.selectionRange.endDate.getTime() / 1000);
+                args["after"] = startDate;
+                args["before"] = endDate;
             }
         }
         if (settings.sort) {

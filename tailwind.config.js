@@ -3,9 +3,7 @@ const colors = require('tailwindcss/colors');
 module.exports = {
     darkMode: 'media',
     plugins: [
-        require("@tailwindcss/forms")({
-            strategy: 'class',
-        })
+        require("@tailwindcss/forms")
     ],
     purge: {
         enabled: true,
@@ -35,7 +33,7 @@ module.exports = {
             gray: colors.coolGray,
             red: colors.red,
             yellow: colors.yellow,
-            blue: colors.lightBlue,
+            blue: colors.sky,
             orange: colors.orange,
             cyan: colors.cyan
         }
