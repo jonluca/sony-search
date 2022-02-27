@@ -43,10 +43,10 @@ input.custom-toggle:checked ~ .dot {
 	padding: 0.25rem 0.5rem;
 }
 .reddit-comment blockquote {
-	border-left: 2px solid #ccc;
-	margin: 0.25rem;
-	padding: 0 0.5rem;
-	color: #666;
+	border-left: 2px solid #9ca3af;
+	margin: 0.25rem 0.5rem;
+	padding: 0.25rem 0.5rem;
+	color: #9ca3af;
 }
 .reddit-comment blockquote ul,
 .reddit-comment blockquote ol {

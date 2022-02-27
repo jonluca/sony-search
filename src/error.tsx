@@ -18,17 +18,17 @@ export class ErrorWrapper extends React.Component<{}, ErrorState> {
 
     render() {
         if (this.state.errorOccurred) {
-            console.log(this.state.error);
-            console.log(this.state.errorInfo);
-            return <>
-                <div className="text-center">
-                    <p>An error occured! You can try using <a className="text-blue-400 hover:text-blue-600" href="https://pushshift.io/api-parameters/">pushshift</a> directly</p>
-                    <div className="bg-gray-800 overflow-x-auto text-gray-400 mt-8 mx-2">
-                        <p>{this.state.error.message}</p>
-                        <p className="whitespace-pre-wrap">{this.state.errorInfo.componentStack.trim()}</p>
-                    </div>
+            console.error(this.state.error, this.state.errorInfo);
+            return (
+                <div>
+                    <h1>Something went wrong.</h1>
+                    <details className="whitespace-pre-wrap">
+                        {this.state.error && this.state.error.toString()}
+                        <br />
+                        {this.state.errorInfo.componentStack}
+                    </details>
                 </div>
-            </>;
+            );
         } else {
             return this.props.children;
         }
