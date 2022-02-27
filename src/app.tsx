@@ -411,7 +411,7 @@ export class App extends React.Component<{}, AppState> {
      * @return {React.ReactNode} The react node for the app
      */
     render(): React.ReactNode {
-        let linkClass = "text-blue-700 hover:text-blue-500 dark:text-cyan-700 dark:hover:text-cyan-500 hover:underline";
+        let linkClass = "text-blue-700 dark:text-blue-300 hover:text-blue-500 hover:underline";
         let inputProps = {
             "autoComplete": "off",
             "autoCorrect": "off",
@@ -442,7 +442,7 @@ export class App extends React.Component<{}, AppState> {
             let threadsFilter = threadsOptions.map(([key, value], i) => {
                 return (
                     <li className="facet flex items-baseline" key={i}>
-                        <label className="inline-block text-black cursor-pointer relative pl-6 pr-1">
+                        <label className="inline-block text-black dark:text-white cursor-pointer relative pl-6 pr-1">
                             <span className="absolute left-0 inset-y-0 flex items-center">
                                 <input type="checkbox"
                                        value={key}
@@ -497,7 +497,7 @@ export class App extends React.Component<{}, AppState> {
                 }
 
                 return (
-                    <div className="w-full rounded-md bg-gray-100 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
+                    <div className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                target="_blank"
@@ -550,19 +550,19 @@ export class App extends React.Component<{}, AppState> {
                                 Filter</label>
                             {selectAll}
                         </div>
-                        <ul className="py-2 px-4 block w-full bg-gray-100 border border-gray-200 text-gray-700 rounded-md">
+                        <ul className="py-2 px-4 block w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
                             {threadsFilter}
                         </ul>
                     </div>;
             }
             content =
-                <div id="results-panel" className="flex-1 flex flex-col overflow-hidden">
-                    <div className="border-b flex flex justify-between items-center px-4 py-2">
+                <div id="results-panel" className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black text-gray-700 dark:text-gray-300">
+                    <div className="border-b border-gray-200 dark:border-gray-700 flex justify-between items-center px-4 py-2">
                         <span
-                            className="font-bold text-lg">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
+                            className="font-bold text-lg text-gray-700 dark:text-gray-300">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
                         <div className="flex space-x-2 md:space-x-4">
                             <button
-                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
+                                className="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-1 px-2 rounded inline-flex items-center"
                                 title="Share Results"
                                 onClick={this.shareResults}>
                                 <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
@@ -573,7 +573,7 @@ export class App extends React.Component<{}, AppState> {
                                 <span className="hidden md:inline">Share</span>
                             </button>
                             <button
-                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded inline-flex items-center"
+                                className="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-1 px-2 rounded inline-flex items-center"
                                 title="Clear Results"
                                 onClick={this.clearResults}>
                                 <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
@@ -610,10 +610,10 @@ export class App extends React.Component<{}, AppState> {
         } else {
             if (this.state.searching) {
                 content = <div id="results-panel"
-                               className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 mx-auto my-4"/>
+                               className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 dark:border-gray-800 h-32 w-32 mx-auto my-4"/>
             } else {
                 content =
-                    <div id="results-panel" className="flex-1 p-4 overflow-y-scroll">
+                    <div id="results-panel" className="flex-1 p-4 overflow-y-scroll bg-white dark:bg-black text-gray-700 dark:text-gray-300">
                         <div className="w-full xl:w-3/4 lg:w-5/6 mx-auto">
                             {this.state.error &&
                                 <div
@@ -647,11 +647,11 @@ export class App extends React.Component<{}, AppState> {
         }
         // Combine everything and return
         // old input style = rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none
-        let textInputClasses = "text-sm text-gray-700 mt-1 block w-full rounded-md bg-gray-100 focus:bg-white border-gray-300 shadow-sm focus:border-blue-800 focus:ring focus:ring-blue-800 focus:ring-opacity-50"
+        let textInputClasses = "dark:bg-black text-sm text-gray-700 dark:text-gray-300 mt-1 block w-full rounded-md bg-gray-100 focus:bg-white dark:focus:bg-gray-800 border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-800 dark:focus:border-blue-300 focus:ring focus:ring-blue-800 dark:focus:ring-blue-400 focus:ring-opacity-50"
         return (
-            <div className="md:h-screen md:flex">
+            <div className="md:h-screen md:flex bg-white dark:bg-black text-gray-700 dark:text-gray-300">
                 <div
-                    className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-800 shadow-lg overflow-y-auto md:flex md:flex-col">
+                    className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg overflow-y-auto md:flex md:flex-col">
                     <div>
                         <form onSubmit={this.searchSubmit}>
                             <h1 className="text-2xl text-gray-700 dark:text-gray-300 font-mono tracking-tighter">Churning
@@ -753,8 +753,8 @@ export class App extends React.Component<{}, AppState> {
                                         <div className="relative mt-4 mx-2">
                                             <input id="toggle-old" type="checkbox" checked={this.state.old}
                                                    onChange={this.handleOldChange} className="sr-only custom-toggle"/>
-                                            <div className="w-8 h-3 bg-gray-300 rounded-full shadow-inner"/>
-                                            <div className="dot absolute w-5 h-5 bg-white rounded-full shadow -left-1 -top-1 transition"/>
+                                            <div className="w-8 h-3 bg-gray-300 dark:bg-gray-700 rounded-full shadow-inner"/>
+                                            <div className="dot absolute w-5 h-5 bg-white dark:bg-black rounded-full shadow -left-1 -top-1 transition"/>
                                         </div>
                                     </label>
                                 </div>
@@ -763,7 +763,7 @@ export class App extends React.Component<{}, AppState> {
                             <div className="mt-4">
                                 <button type="submit"
                                         disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
-                                        className={"w-full rounded-md text-lg px-4 py-2 font-semibold tracking-wider text-white bg-blue-900 dark:bg-cyan-800 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-cyan-600')}>
+                                        className={"w-full rounded-md text-lg px-4 py-2 font-semibold tracking-wider text-white dark:text-gray-200 bg-blue-900 dark:bg-cyan-900 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-cyan-700')}>
                                     <span>{this.state.searching ? "Searching..." : "Search"}</span>
                                 </button>
                             </div>

@@ -12,8 +12,8 @@ export class SearchHelp extends React.Component {
 			</thead>
 			<tbody>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold">Search</td>
-				<td className="border px-4 py-2 align-top">
+				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold border-gray-200 dark:border-gray-700">Search</td>
+				<td className="border px-4 py-2 align-top border-gray-200 dark:border-gray-700">
 				  <dl>
 					<dt className="font-bold">Multiple terms (AND operation)</dt>
 					<dd className="pl-4">
@@ -44,8 +44,8 @@ export class SearchHelp extends React.Component {
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold">Author</td>
-				<td className="border px-4 py-2 align-top">
+				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold border-gray-200 dark:border-gray-700">Author</td>
+				<td className="border px-4 py-2 align-top border-gray-200 dark:border-gray-700">
 				  <p>This parameter will restrict the search to specific Reddit authors.</p>
 				  <dl>
 					<dt className="mt-2 font-bold">Inclusive</dt>
@@ -67,20 +67,20 @@ export class SearchHelp extends React.Component {
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold">Time Range</td>
-				<td className="border px-4 py-2 align-top">
+				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold border-gray-200 dark:border-gray-700">Time Range</td>
+				<td className="border px-4 py-2 align-top border-gray-200 dark:border-gray-700">
 				  <p>Select a time range from the dropdown. Options include 1 day, 1 week, 1 month, 3 months, 6 months, 1 year, 2 year, and Custom. Custom allows a date range to be selected via calendar widget.</p>
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold">Sort Order</td>
-				<td className="border px-4 py-2 align-top">
+				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold border-gray-200 dark:border-gray-700">Sort Order</td>
+				<td className="border px-4 py-2 align-top border-gray-200 dark:border-gray-700">
 				  <p>Select a sort order by date, options are newest and oldest.</p>
 				</td>
 			  </tr>
 			  <tr>
-				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold">Minimum Score</td>
-				<td className="border px-4 py-2 align-top">
+				<td className="border px-4 py-2 align-top whitespace-nowrap font-bold border-gray-200 dark:border-gray-700">Minimum Score</td>
+				<td className="border px-4 py-2 align-top border-gray-200 dark:border-gray-700">
   				  <p>The score parameter allows you to search for comments with minimum score. (Score is not consistent with live data, score is as of time of snapshot)</p>
 				  <p className="italic pl-4">Example: 1</p>
 				</td>
