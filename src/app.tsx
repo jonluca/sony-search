@@ -489,8 +489,10 @@ export class App extends React.Component<{}, AppState> {
 
                 let threadBadge;
                 if (comment.thread) {
-                    threadBadge = <div
-                        className="bg-blue-600 dark:bg-cyan-600 rounded-full px-3 py-1 text-xs text-white">{comment.thread}</div>;
+                    threadBadge =
+                        <div className="bg-blue-600 dark:bg-cyan-600 rounded-full px-3 py-1 text-xs text-white">
+                            <span className="sr-only">Comment Thread:</span> {comment.thread}
+                        </div>;
                 }
 
                 let timeAgo = ta.ago((comment.created_utc * 1000));
@@ -503,17 +505,17 @@ export class App extends React.Component<{}, AppState> {
                 }
 
                 return (
-                    <div className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
+                    <li className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                target="_blank"
                                onClick={(e) => this.handleAuthorClick(e, comment)}
                                href={`https://${this.state.old ? 'old' : 'www'}.reddit.com/u/${comment.author}`}>
-                                {comment.author}
+                                <span className="sr-only">Comment Author:</span> {comment.author}
                             </a>
                             <span className="bg-orange-600 rounded-full px-3 py-1 text-xs text-white"
                                   title={`Score: ${comment.score} point${comment.score !== 1 ? 's' : ''}`}>
-                                {comment.score}
+                                <span className="sr-only">Comment Score:</span> {comment.score}
                             </span>
                         </div>
                         <a href={`https://${this.state.old ? 'old' : 'www'}.reddit.com${permalink}?context=1`}
@@ -532,10 +534,10 @@ export class App extends React.Component<{}, AppState> {
                                 className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white cursor-pointer"
                                 onClick={this.toggleDate}
                                 title={timeTitle}>
-                                {timeText}
+                                <span className="sr-only">Comment Posted:</span> {timeText}
                             </span>
                         </div>
-                    </div>
+                    </li>
                 );
             });
             let allChecked = Object.values(this.state.threadType).every(v => v);
@@ -550,7 +552,7 @@ export class App extends React.Component<{}, AppState> {
             }
             if (Object.keys(this.state.threadType).length > 1) {
                 facets =
-                    <div className="mt-8 mb-4">
+                    <div className="mt-8 mb-4" role="region" aria-label="Search Result Filters">
                         <div className="flex justify-between items-center mb-1">
                             <label className="text-gray-700 dark:text-gray-100 text-xs font-bold ">Threads
                                 Filter</label>
@@ -565,6 +567,7 @@ export class App extends React.Component<{}, AppState> {
                 <div id="results-panel" className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black text-gray-700 dark:text-gray-100">
                     <div className="border-b border-gray-200 dark:border-gray-700 flex justify-between items-center px-4 py-2">
                         <span
+                            aria-live="polite"
                             className="font-bold text-lg text-gray-700 dark:text-gray-100">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
                         <div className="flex space-x-2 md:space-x-4">
                             <button
@@ -592,7 +595,9 @@ export class App extends React.Component<{}, AppState> {
                         </div>
                     </div>
                     <div className="p-4 md:px-6 lg:px-8 flex-1 overflow-y-scroll">
-                        {inner}
+                        <ul className="list-none" role="region" aria-label="Search Results">
+                            {inner}
+                        </ul>
                         <div className="text-center font-bold text-lg py-4">
                             {resultCount > 0 ? `End of Results` : `No Results Found`}
                         </div>
@@ -621,8 +626,12 @@ export class App extends React.Component<{}, AppState> {
                 </div>;
         } else {
             if (this.state.searching) {
-                content = <div id="results-panel"
-                               className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 dark:border-gray-800 h-32 w-32 mx-auto my-4"/>
+                content =
+                    <div id="results-panel"
+                         aria-live="polite"
+                         className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 dark:border-gray-800 h-32 w-32 mx-auto my-4">
+                        <span className="sr-only">Searching</span>
+                    </div>
             } else {
                 content =
                     <div id="results-panel" className="flex-1 p-4 overflow-y-scroll bg-white dark:bg-black text-gray-700 dark:text-gray-100">
@@ -665,7 +674,7 @@ export class App extends React.Component<{}, AppState> {
                 <div
                     className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg overflow-y-auto md:flex md:flex-col">
                     <div>
-                        <form onSubmit={this.searchSubmit}>
+                        <form role="search" aria-label="Search Form" onSubmit={this.searchSubmit}>
                             <h1 className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">{Constants.appName}</h1>
                             {/* Search Query */}
                             <div className="mt-2">
