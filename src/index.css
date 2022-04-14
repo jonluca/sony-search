@@ -20,7 +20,7 @@ input.custom-toggle:checked ~ .dot {
 	visibility: hidden;
 }
 .facet:hover button.only,
-.facet:focus button.only {
+.facet:focus-within button.only {
 	visibility: visible;
 }
 .reddit-comment ul,

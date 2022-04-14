@@ -459,7 +459,9 @@ export class App extends React.Component<{}, AppState> {
                             <span className="text-sm">{key}</span>
                         </label>
                         <button className={"only cursor-pointer text-sm ml-2 px-1 hidden lg:inline-block " + linkClass}
-                                onClick={() => this.handleThreadsOnly(key)}>only
+                                aria-label={`show only ${key} thread results`}
+                                onClick={() => this.handleThreadsOnly(key)}>
+                            only
                         </button>
                     </li>
                 )
@@ -568,6 +570,7 @@ export class App extends React.Component<{}, AppState> {
                     <div className="border-b border-gray-200 dark:border-gray-700 flex justify-between items-center px-4 py-2">
                         <span
                             aria-live="polite"
+                            aria-atomic="true"
                             className="font-bold text-lg text-gray-700 dark:text-gray-100">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
                         <div className="flex space-x-2 md:space-x-4">
                             <button
