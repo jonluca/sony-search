@@ -670,12 +670,12 @@ export class App extends React.Component<{}, AppState> {
         // old input style = rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none
         let textInputClasses = "dark:bg-black text-sm text-gray-700 dark:text-gray-100 mt-1 block w-full rounded-md bg-gray-100 focus:bg-white dark:focus:bg-gray-800 border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-800 dark:focus:border-blue-300 focus:ring focus:ring-blue-800 dark:focus:ring-blue-400 focus:ring-opacity-50"
         return (
-            <div className="md:h-screen md:flex bg-white dark:bg-black text-gray-700 dark:text-gray-100">
+            <main className="md:h-screen md:flex bg-white dark:bg-black text-gray-700 dark:text-gray-100" aria-labelledby="app-title">
                 <div
                     className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg overflow-y-auto md:flex md:flex-col">
                     <div>
                         <form role="search" aria-label="Search Form" onSubmit={this.searchSubmit}>
-                            <h1 className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">{Constants.appName}</h1>
+                            <h1 id="app-title" className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">{Constants.appName}</h1>
                             {/* Search Query */}
                             <div className="mt-2">
                                 <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
@@ -792,7 +792,7 @@ export class App extends React.Component<{}, AppState> {
                     </div>
                 </div>
                 {content}
-            </div>
+            </main>
         );
     }
 }
