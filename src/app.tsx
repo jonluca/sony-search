@@ -7,7 +7,9 @@ import ReactGA from 'react-ga';
 import LZString from "lz-string";
 import {isEmpty} from "underscore";
 import {DateRange} from 'react-date-range';
-import toast from 'react-hot-toast';
+import Clipboard from 'react-clipboard.js';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import {PushshiftAPI, SearchSettings} from './api';
 import {SearchHelp} from './help';
@@ -394,16 +396,8 @@ export class App extends React.Component<{}, AppState> {
         this.setState({threadType: {}, error: null, comments: null, searching: false});
     }
 
-    shareResults = () => {
-        let {error, searching, comments, old, showDate, ...toShare} = this.state;
-        let shareUrl = `${window.location.href}#${utils.compress(toShare)}`;
-        let shareInput = document.body.appendChild(document.createElement("input"));
-        shareInput.value = shareUrl;
-        shareInput.focus();
-        shareInput.select();
-        document.execCommand('copy');
-        shareInput.parentNode.removeChild(shareInput);
-        toast.success('Share Link Copied!');
+    shareSuccess = () => {
+        toast.success("Share Link Copied!");
         if (!isDevMode) {
             ReactGA.event({
                 category: 'Share',
@@ -507,7 +501,7 @@ export class App extends React.Component<{}, AppState> {
                 }
 
                 return (
-                    <li className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
+                    <div className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden" key={comment.id}>
                         <div className="flex justify-between items-start">
                             <a className={linkClass + " text-lg font-semibold leading-5"}
                                target="_blank"
@@ -539,7 +533,7 @@ export class App extends React.Component<{}, AppState> {
                                 <span className="sr-only">Comment Posted:</span> {timeText}
                             </span>
                         </div>
-                    </li>
+                    </div>
                 );
             });
             let allChecked = Object.values(this.state.threadType).every(v => v);
@@ -565,25 +559,30 @@ export class App extends React.Component<{}, AppState> {
                         </ul>
                     </div>;
             }
+
+            let {error, searching, comments, old, showDate, ...toShare} = this.state;
+            let shareUrl = `${window.location.href}#${utils.compress(toShare)}`;
+
             content =
-                <div id="results-panel" className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black text-gray-700 dark:text-gray-100">
-                    <div className="border-b border-gray-200 dark:border-gray-700 flex justify-between items-center px-4 py-2">
-                        <span
-                            aria-live="polite"
-                            aria-atomic="true"
-                            className="font-bold text-lg text-gray-700 dark:text-gray-100">Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} results</span>
-                        <div className="flex space-x-2 md:space-x-4">
-                            <button
-                                className="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 py-1 px-2 rounded inline-flex items-center"
-                                title="Share Results"
-                                onClick={this.shareResults}>
+                <>
+                    <div id="results-top-bar" className="flex justify-between items-center flex-none px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                        <div id="results-title" aria-live="polite" aria-atomic="true" className="font-bold text-lg text-gray-700 dark:text-gray-100">
+                            Showing {filterCount < resultCount ? `${filterCount} of ` : ''}{resultCount} result{resultCount === 1 ? '':'s'}
+                        </div>
+                        <div id="results-actions" className="flex space-x-2 md:space-x-4">
+                            <Clipboard component="button"
+                                       className="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 py-1 px-2 rounded inline-flex items-center"
+                                       button-href="#"
+                                       button-title="Share Results"
+                                       onSuccess={this.shareSuccess}
+                                       data-clipboard-text={shareUrl}>
                                 <svg className="fill-current w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                           d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                                 </svg>
                                 <span className="hidden md:inline">Share</span>
-                            </button>
+                            </Clipboard>
                             <button
                                 className="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 py-1 px-2 rounded inline-flex items-center"
                                 title="Clear Results"
@@ -597,17 +596,9 @@ export class App extends React.Component<{}, AppState> {
                             </button>
                         </div>
                     </div>
-                    <div className="p-4 md:px-6 lg:px-8 flex-1 overflow-y-scroll">
-                        <ul className="list-none" role="region" aria-label="Search Results">
-                            {inner}
-                        </ul>
-                        <div className="text-center font-bold text-lg py-4">
-                            {resultCount > 0 ? `End of Results` : `No Results Found`}
-                        </div>
+                    <div id="results-list" role="region" aria-label="Search Results" className="flex-1 overflow-y-scroll p-4 md:px-6 lg:px-8">
                         {this.state.error &&
-                            <div
-                                className="bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 border border-red-400 divide-y divide-red-400 p-4 mb-4 rounded"
-                                role="alert">
+                            <div className="bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 border border-red-400 divide-y divide-red-400 p-4 mb-4 rounded" role="alert">
                                 <div className="flex items-start pb-4">
                                     <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
                                          viewBox="0 0 24 24" stroke="currentColor">
@@ -622,16 +613,35 @@ export class App extends React.Component<{}, AppState> {
                                 </div>
                             </div>
                         }
-                        <div className="text-center text-xs py-4">
-                            {infoText}
-                        </div>
+                        {resultCount > 0 &&
+                            <>
+                                <ul className="list-none">
+                                    {inner}
+                                </ul>
+                                <div className="text-center font-bold text-lg py-4">
+                                    End of Results
+                                </div>
+                            </>
+                        }
+                        {resultCount === 0 &&
+                            <div className="text-center font-bold text-lg py-4">
+                                No Results Found
+                            </div>
+                        }
                     </div>
+                    <div id="results-footer" className="flex-none px-4 py-2 text-center text-xs">
+                        {infoText}
+                    </div>
+                </>
+            let test =
+                <div id="results-panel" className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black text-gray-700 dark:text-gray-100">
                 </div>;
         } else {
             if (this.state.searching) {
                 content =
                     <div id="results-panel"
                          aria-live="polite"
+                         aria-atomic="true"
                          className="p-4 mb-8 loader ease-linear rounded-full border-8 border-t-8 border-gray-200 dark:border-gray-800 h-32 w-32 mx-auto my-4">
                         <span className="sr-only">Searching</span>
                     </div>
@@ -673,129 +683,140 @@ export class App extends React.Component<{}, AppState> {
         // old input style = rounded-md block w-full text-sm text-gray-700 bg-gray-100 focus:bg-white border-gray-200 focus:border-blue-800 focus:outline-none
         let textInputClasses = "dark:bg-black text-sm text-gray-700 dark:text-gray-100 mt-1 block w-full rounded-md bg-gray-100 focus:bg-white dark:focus:bg-gray-800 border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-800 dark:focus:border-blue-300 focus:ring focus:ring-blue-800 dark:focus:ring-blue-400 focus:ring-opacity-50"
         return (
-            <main className="md:h-screen md:flex bg-white dark:bg-black text-gray-700 dark:text-gray-100" aria-labelledby="app-title">
-                <div
-                    className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg overflow-y-auto md:flex md:flex-col">
-                    <div>
-                        <form role="search" aria-label="Search Form" onSubmit={this.searchSubmit}>
-                            <h1 id="app-title" className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">{Constants.appName}</h1>
-                            {/* Search Query */}
-                            <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
-                                       htmlFor="search-query">Search</label>
-                                <input onChange={this.handleQueryChange}
-                                       id="search-query"
-                                       type="search"
-                                       value={this.state.query}
-                                       className={textInputClasses}
-                                       {...inputProps}
-                                />
+            <>
+                <ToastContainer
+                    position="top-center"
+                    theme="colored"
+                    autoClose={2000}
+                    hideProgressBar
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable={false}
+                    pauseOnHover
+                />
+                <div id="search-form-panel" className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg">
+                    <form role="search" aria-label="Search Form" onSubmit={this.searchSubmit}>
+                        <h1 id="app-title" className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">{Constants.appName}</h1>
+                        {/* Search Query */}
+                        <div className="mt-2">
+                            <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
+                                   htmlFor="search-query">Search</label>
+                            <input onChange={this.handleQueryChange}
+                                   id="search-query"
+                                   type="search"
+                                   value={this.state.query}
+                                   className={textInputClasses}
+                                   {...inputProps}
+                            />
+                        </div>
+                        {/* Author */}
+                        <div className="mt-2">
+                            <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
+                                   htmlFor="author">Author</label>
+                            <input onChange={this.handleAuthorChange}
+                                   id="author"
+                                   type="search"
+                                   value={this.state.author}
+                                   className={textInputClasses}
+                                   {...inputProps}
+                            />
+                        </div>
+                        {/* Time Range */}
+                        <div className="mt-2">
+                            <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
+                                   htmlFor="time-range">Time Range</label>
+                            <div className="relative">
+                                <select onChange={this.handleTimeChange}
+                                        id="time-range"
+                                        value={this.state.time}
+                                        className={textInputClasses}>
+                                    {
+                                        Object.entries(SearchRange).map(([key, obj], index) => {
+                                            return (
+                                                <option value={key} key={index}>{obj.name}</option>
+                                            );
+                                        })
+                                    }
+                                    <option value="">Custom</option>
+                                </select>
                             </div>
-                            {/* Author */}
-                            <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
-                                       htmlFor="author">Author</label>
-                                <input onChange={this.handleAuthorChange}
-                                       id="author"
-                                       type="search"
-                                       value={this.state.author}
-                                       className={textInputClasses}
-                                       {...inputProps}
-                                />
-                            </div>
-                            {/* Time Range */}
-                            <div className="mt-2">
-                                <label className="block text-gray-700 dark:text-gray-100 text-xs font-bold mb-1"
-                                       htmlFor="time-range">Time Range</label>
+                        </div>
+                        {/* Date Range Picker */}
+                        <div className={`mt-2 customize-date-range ${this.state.time === "" ? 'block' : 'hidden'}`}>
+                            <DateRange
+                                editableDateInputs={false}
+                                onChange={(item) => this.setState({selectionRange: item.selection})}
+                                moveRangeOnFirstSelection={false}
+                                minDate={new Date(2012, 11, 11, 0, 0, 0, 0)}
+                                maxDate={new Date()}
+                                ranges={[this.state.selectionRange]}
+                                rangeColors={['#3182ce', '#3ecf8e', '#fed14c']}
+                            />
+                        </div>
+                        <div className="mt-2 grid grid-cols-8 gap-3">
+                            {/* Sort Direction */}
+                            <div className="col-span-3">
+                                <label
+                                    className="block text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1"
+                                    htmlFor="sort-order">Sort By</label>
                                 <div className="relative">
-                                    <select onChange={this.handleTimeChange}
-                                            id="time-range"
-                                            value={this.state.time}
+                                    <select onChange={this.handleSortDirectionChange}
+                                            id="sort-order"
+                                            value={this.state.sort}
                                             className={textInputClasses}>
-                                        {
-                                            Object.entries(SearchRange).map(([key, obj], index) => {
-                                                return (
-                                                    <option value={key} key={index}>{obj.name}</option>
-                                                );
-                                            })
-                                        }
-                                        <option value="">Custom</option>
+                                        <option value="desc">Newest</option>
+                                        <option value="asc">Oldest</option>
                                     </select>
                                 </div>
                             </div>
-                            {/* Date Range Picker */}
-                            <div className={`mt-2 customize-date-range ${this.state.time === "" ? 'block' : 'hidden'}`}>
-                                <DateRange
-                                    editableDateInputs={false}
-                                    onChange={(item) => this.setState({selectionRange: item.selection})}
-                                    moveRangeOnFirstSelection={false}
-                                    minDate={new Date(2012, 11, 11, 0, 0, 0, 0)}
-                                    maxDate={new Date()}
-                                    ranges={[this.state.selectionRange]}
-                                    rangeColors={['#3182ce', '#3ecf8e', '#fed14c']}
+                            {/* Score */}
+                            <div className="col-span-3">
+                                <label
+                                    className="block text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1"
+                                    htmlFor="min-score"><abbr title="Minimum"
+                                                              className="no-underline">Min</abbr> Score</label>
+                                <input onChange={this.handleScoreChange}
+                                       id="min-score"
+                                       type="text"
+                                       value={this.state.score}
+                                       className={textInputClasses}
+                                       placeholder="e.g. 1"
+                                       {...inputProps}
                                 />
                             </div>
-                            <div className="mt-2 grid grid-cols-8 gap-3">
-                                {/* Sort Direction */}
-                                <div className="col-span-3">
-                                    <label
-                                        className="block text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1"
-                                        htmlFor="sort-order">Sort By</label>
-                                    <div className="relative">
-                                        <select onChange={this.handleSortDirectionChange}
-                                                id="sort-order"
-                                                value={this.state.sort}
-                                                className={textInputClasses}>
-                                            <option value="desc">Newest</option>
-                                            <option value="asc">Oldest</option>
-                                        </select>
+                            {/* Old Reddit Toggle */}
+                            <div className="col-span-2">
+                                <label htmlFor="toggle-old" className="block cursor-pointer">
+                                    <div
+                                        className="text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1">Old
+                                        Reddit
                                     </div>
-                                </div>
-                                {/* Score */}
-                                <div className="col-span-3">
-                                    <label
-                                        className="block text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1"
-                                        htmlFor="min-score"><abbr title="Minimum"
-                                                                  className="no-underline">Min</abbr> Score</label>
-                                    <input onChange={this.handleScoreChange}
-                                           id="min-score"
-                                           type="text"
-                                           value={this.state.score}
-                                           className={textInputClasses}
-                                           placeholder="e.g. 1"
-                                           {...inputProps}
-                                    />
-                                </div>
-                                {/* Old Reddit Toggle */}
-                                <div className="col-span-2">
-                                    <label htmlFor="toggle-old" className="block cursor-pointer">
-                                        <div
-                                            className="text-gray-700 dark:text-gray-100 text-xs font-bold truncate mb-1">Old
-                                            Reddit
-                                        </div>
-                                        <div className="relative mt-4 mx-2">
-                                            <input id="toggle-old" type="checkbox" checked={this.state.old}
-                                                   onChange={this.handleOldChange} className="sr-only custom-toggle"/>
-                                            <div className="w-8 h-3 bg-gray-300 dark:bg-gray-700 rounded-full shadow-inner"/>
-                                            <div className="dot absolute w-5 h-5 bg-white dark:bg-black rounded-full shadow -left-1 -top-1 transition"/>
-                                        </div>
-                                    </label>
-                                </div>
+                                    <div className="relative mt-4 mx-2">
+                                        <input id="toggle-old" type="checkbox" checked={this.state.old}
+                                               onChange={this.handleOldChange} className="sr-only custom-toggle"/>
+                                        <div className="w-8 h-3 bg-gray-300 dark:bg-gray-700 rounded-full shadow-inner"/>
+                                        <div className="dot absolute w-5 h-5 bg-white dark:bg-black rounded-full shadow -left-1 -top-1 transition"/>
+                                    </div>
+                                </label>
                             </div>
-                            {/* Submit Button */}
-                            <div className="mt-4">
-                                <button type="submit"
-                                        disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
-                                        className={"w-full rounded-md text-lg px-4 py-2 font-semibold tracking-wider text-white dark:text-gray-100 bg-blue-900 dark:bg-cyan-900 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-cyan-700')}>
-                                    <span>{this.state.searching ? "Searching..." : "Search"}</span>
-                                </button>
-                            </div>
-                        </form>
-                        {facets}
-                    </div>
+                        </div>
+                        {/* Submit Button */}
+                        <div className="mt-4">
+                            <button type="submit"
+                                    disabled={this.state.searching || this.state.errorStart || this.state.errorEnd}
+                                    className={"w-full rounded-md text-lg px-4 py-2 font-semibold tracking-wider text-white dark:text-gray-100 bg-blue-900 dark:bg-cyan-900 " + ((this.state.searching || this.state.errorStart || this.state.errorEnd) ? 'cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-cyan-700')}>
+                                <span>{this.state.searching ? "Searching..." : "Search"}</span>
+                            </button>
+                        </div>
+                    </form>
+                    {facets}
                 </div>
-                {content}
-            </main>
+                <div id="results-panel" className="flex-1 flex flex-col bg-white dark:bg-black overflow-hidden">
+                    {content}
+                </div>
+            </>
         );
     }
 }
