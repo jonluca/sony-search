@@ -437,18 +437,18 @@ export class App extends React.Component<{}, AppState> {
             {Constants.appAuthor}
           </a>
         </p>
+
         <p>
           <a
-            href={`https://${this.state.old ? "old" : "www"}.reddit.com/message/compose/?to=${
-              Constants.appAuthor
-            }&subject=${Constants.appName.replace(/\s+/g, "+")}`}
+            href={`https://github.com/jonluca/sony-search`}
             target="_blank"
             className={linkClass + " no-underline hover:underline"}
             onClick={(e) => this.handleOutboundClick(e)}
           >
-            PM with comments, suggestions, issues
+            Open source on GitHub
           </a>
         </p>
+        <p>Based on churning search by /u/garettg</p>
       </>
     );
 
