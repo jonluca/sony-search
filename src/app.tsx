@@ -12,7 +12,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { PushshiftAPI, SearchSettings } from "./api";
 import { SearchHelp } from "./help";
 import { Constants, SearchRange } from "./constants";
-import ReactGA from "nextjs-google-analytics";
+import * as ReactGA from "nextjs-google-analytics";
 const isDevMode = process.env.NODE_ENV !== "production";
 
 interface AppState extends SearchSettings {
