@@ -20,12 +20,12 @@ export class SearchHelp extends React.Component {
                 <dt className="font-bold">Multiple terms (AND operation)</dt>
                 <dd className="pl-4">
                   <p>To find comments that match two different words, seperate using a "+".</p>
-                  <p className="italic">Example: amex+bonus</p>
+                  <p className="italic">Example: sony+alpha</p>
                 </dd>
                 <dt className="mt-2 font-bold">Multiple terms (OR operation)</dt>
                 <dd className="pl-4">
                   <p>To find comments that match either of two different words, seperate using a "|".</p>
-                  <p className="italic">Example: barclays|citi</p>
+                  <p className="italic">Example: 100mm|400mm</p>
                 </dd>
                 <dt className="mt-2 font-bold">Negation</dt>
                 <dd className="pl-4">
@@ -33,12 +33,12 @@ export class SearchHelp extends React.Component {
                     To find comments that match one word but not another word, use a "-" before the word you wish to
                     exclude.
                   </p>
-                  <p className="italic">Example: chase -amex</p>
+                  <p className="italic">Example: sony -canon</p>
                 </dd>
                 <dt className="mt-2 font-bold">Exact Phrase</dt>
                 <dd className="pl-4">
                   <p>If you wanted to find an exact phrase, you can put the phrase in quotation marks.</p>
-                  <p className="italic">Example: "amex gold"</p>
+                  <p className="italic">Example: "super telephoto"</p>
                 </dd>
                 <dt className="mt-2 font-bold">Combinations</dt>
                 <dd className="pl-4">
@@ -46,7 +46,7 @@ export class SearchHelp extends React.Component {
                     You can combine the previous types of operations and group them using parentheses for advanced
                     searching.
                   </p>
-                  <p className="italic">Example: (csp|csr|sapphire) -freedom</p>
+                  <p className="italic">Example: (super|telephoto) -nikon</p>
                 </dd>
               </dl>
             </td>

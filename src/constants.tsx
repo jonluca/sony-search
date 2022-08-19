@@ -1,10 +1,9 @@
 export const Constants = {
-  appId: "churning-search",
-  appName: "Churning Search",
-  appAnalyticsProfile: "UA-171174933-1",
-  appHosts: ["churning.io", "garettg.github.io"],
-  appAuthor: "garettg",
-  appSubreddit: "churning",
+  appId: "sonyalpha-search",
+  appName: "Sony Alpha Search",
+  appAnalyticsProfile: "G-BTJMKGNN1B",
+  appAuthor: "jonluca",
+  appSubreddit: "sonyalpha",
   useBeta: false, // beta not providing reliable data currently and ids are not the same as prod
 };
 

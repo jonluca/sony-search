@@ -2,11 +2,11 @@ import * as React from "react";
 
 export interface ErrorState {
   errorOccurred: boolean;
-  errorInfo: object;
-  error: object;
+  errorInfo: any;
+  error: any;
 }
 
-export class ErrorWrapper extends React.Component<{}, ErrorState> {
+export class ErrorWrapper extends React.Component<{ children?: any }, ErrorState> {
   constructor(props) {
     super(props);
     this.state = { errorOccurred: false, errorInfo: null, error: null };

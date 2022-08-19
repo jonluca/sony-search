@@ -9,10 +9,10 @@ export interface SearchSettings {
   time: string;
   selectionRange: any;
   sort: string;
-  score: number;
+  score: number | string;
   old: boolean;
   showDate: boolean;
-  threadType: object;
+  threadType?: object;
 }
 
 export class PushshiftAPI {

@@ -21,8 +21,10 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      <GoogleAnalytics gaMeasurementId={"G-1BG86PJWQ4"} />
-      <Component {...pageProps} />
+      <div className="mainContent">
+        <GoogleAnalytics gaMeasurementId={"G-BTJMKGNN1B"} />
+        <Component {...pageProps} />
+      </div>
     </>
   );
 }

@@ -12,13 +12,15 @@ import { ToastContainer, toast } from "react-toastify";
 import { PushshiftAPI, SearchSettings } from "./api";
 import { SearchHelp } from "./help";
 import { Constants, SearchRange } from "./constants";
-
+import ReactGA from "nextjs-google-analytics";
 const isDevMode = process.env.NODE_ENV !== "production";
 
 interface AppState extends SearchSettings {
   error: string;
   searching: boolean;
   comments: Array<any>;
+  errorStart?: any;
+  errorEnd?: any;
 }
 
 /** Main class for Reddit Search */
@@ -50,7 +52,7 @@ export class App extends React.Component<{}, AppState> {
     this.api = new PushshiftAPI();
   }
 
-  loadSavedState(formData: object = {}, shouldSearch: boolean = false) {
+  loadSavedState(formData: any = {}, shouldSearch: boolean = false) {
     if (
       !isEmpty(formData) &&
       formData.hasOwnProperty("selectionRange") &&
@@ -106,14 +108,7 @@ export class App extends React.Component<{}, AppState> {
 
   setError = (error: string) => {
     this.setState({ error: error });
-    if (!isDevMode) {
-      ReactGA.exception({
-        description: error,
-        fatal: false,
-      });
-    } else {
-      console.error(`Pushshift API Error: ${error}`);
-    }
+    console.error(`Pushshift API Error: ${error}`);
   };
 
   handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +120,7 @@ export class App extends React.Component<{}, AppState> {
   };
 
   handleTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    let tempState = { time: e.target.value };
+    let tempState: Record<string, any> = { time: e.target.value };
     if (e.target.value !== "") {
       tempState.selectionRange = {
         startDate: subDays(new Date(), 7),
@@ -133,7 +128,7 @@ export class App extends React.Component<{}, AppState> {
         key: "selection",
       };
     }
-    this.setState(tempState);
+    this.setState(tempState as any);
   };
 
   handleSortDirectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -156,7 +151,7 @@ export class App extends React.Component<{}, AppState> {
     let threadType = this.state.threadType;
     threadType[e.target.value] = e.target.checked;
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("filter", {
         category: "Filter",
         action: e.target.value,
         label: e.target.checked ? "Show" : "Hide",
@@ -171,7 +166,7 @@ export class App extends React.Component<{}, AppState> {
       threadType[key] = key === thread;
     }
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("filter", {
         category: "Filter",
         action: thread,
         label: "Only",
@@ -186,7 +181,7 @@ export class App extends React.Component<{}, AppState> {
       threadType[key] = true;
     }
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("filter", {
         category: "Filter",
         action: "All",
         label: "Show",
@@ -197,7 +192,7 @@ export class App extends React.Component<{}, AppState> {
 
   handleOutboundClick = (event) => {
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("click", {
         category: "Outbound",
         action: "Click",
         label: event.target.href,
@@ -207,12 +202,12 @@ export class App extends React.Component<{}, AppState> {
 
   handleResultClick = (event, comment) => {
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("Result", {
         category: "Result",
         action: "Thread",
         label: comment.thread,
       });
-      ReactGA.event({
+      ReactGA.event("Result", {
         category: "Result",
         action: "Author",
         label: comment.author,
@@ -222,7 +217,7 @@ export class App extends React.Component<{}, AppState> {
 
   handleAuthorClick = (event, comment) => {
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("click", {
         category: "Author",
         action: "Click",
         label: comment.author,
@@ -348,13 +343,14 @@ export class App extends React.Component<{}, AppState> {
       score: this.state.score,
     };
 
-    for (const [key, value] of Object.entries(toStats)) {
+    for (const [key, _value] of Object.entries(toStats)) {
+      const value = String(_value);
       if (value !== "" && !isDevMode) {
-        ReactGA.event({
+        ReactGA.event("search", {
           nonInteraction: true,
           category: "Search",
           action: key,
-          label: value,
+          label: String(value),
         });
       }
       if (key === "query") {
@@ -362,7 +358,7 @@ export class App extends React.Component<{}, AppState> {
         let keywords = value.replace(regex, " ").replace(/\s\s+/g, " ").trim().toLowerCase().split(" ");
         keywords.map((term) => {
           if (!isDevMode) {
-            ReactGA.event({
+            ReactGA.event("search", {
               nonInteraction: true,
               category: "Search",
               action: "keyword",
@@ -400,10 +396,10 @@ export class App extends React.Component<{}, AppState> {
     });
   };
 
-  shareSuccess = () => {
+  shareSuccess = (toShare) => {
     toast.success("Share Link Copied!");
     if (!isDevMode) {
-      ReactGA.event({
+      ReactGA.event("share", {
         category: "Share",
         action: "Click",
         label: JSON.stringify(toShare),
@@ -416,7 +412,7 @@ export class App extends React.Component<{}, AppState> {
    */
   render(): React.ReactNode {
     let linkClass = "text-blue-700 dark:text-blue-300 hover:text-blue-500 hover:underline";
-    let inputProps = {
+    let inputProps: Partial<React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>> = {
       autoComplete: "off",
       autoCorrect: "off",
       autoCapitalize: "off",
@@ -552,9 +548,9 @@ export class App extends React.Component<{}, AppState> {
               target="_blank"
             >
               <ReactMarkdown
-                source={comment.body.replace(/^(?:&gt;)/gm, "\n>")}
-                plugins={[gfm]}
-                disallowedTypes={["link"]}
+                children={comment.body.replace(/^(?:&gt;)/gm, "\n>")}
+                remarkPlugins={[gfm]}
+                disallowedElements={["link"]}
                 unwrapDisallowed
               />
             </a>
