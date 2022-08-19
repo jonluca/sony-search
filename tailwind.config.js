@@ -1,41 +1,24 @@
-const colors = require('tailwindcss/colors');
+const colors = require("tailwindcss/colors");
 
 module.exports = {
-    darkMode: 'media',
-    plugins: [
-        require("@tailwindcss/forms")
-    ],
-    purge: {
-        enabled: true,
-        content: [
-            './src/*.html',
-            './src/*.tsx',
-            './src/*.jsx',
-            './src/*.vue',
-        ],
-        options: {
-            safelist: [
-                'opacity-50',
-                'cursor-not-allowed',
-                'hover:bg-blue-700'
-            ],
-        },
+  content: ["./src/pages/**/*.{js,ts,jsx,tsx}", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    container: {
+      center: true,
     },
-    theme: {
-        container: {
-            center: true
-        },
-        colors: {
-            transparent: 'transparent',
-            current: 'currentColor',
-            black: colors.black,
-            white: colors.white,
-            gray: colors.coolGray,
-            red: colors.red,
-            yellow: colors.yellow,
-            blue: colors.sky,
-            orange: colors.orange,
-            cyan: colors.cyan
-        }
-    }
-}
+    colors: {
+      transparent: "transparent",
+      current: "currentColor",
+      black: colors.black,
+      white: colors.white,
+      gray: colors.coolGray,
+      red: colors.red,
+      yellow: colors.yellow,
+      blue: colors.sky,
+      orange: colors.orange,
+      cyan: colors.cyan,
+    },
+  },
+  darkMode: "media",
+  plugins: [require("@tailwindcss/forms")],
+};
