@@ -93,6 +93,10 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
   const { refetch, error, data, isLoading, fetchStatus } = usePushshiftQuery(state);
 
   useEffect(() => {
+    localStorage.setItem(Constants.appId, utils.compress(state));
+  }, [state]);
+
+  useEffect(() => {
     const loadSavedState = (formData: any = {}, shouldSearch = false) => {
       if (!isEmpty(formData)) {
         if (formData.selectionRange && formData.selectionRange.startDate && formData.selectionRange.endDate) {
