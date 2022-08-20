@@ -94,21 +94,18 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
 
   useEffect(() => {
     const loadSavedState = (formData: any = {}, shouldSearch = false) => {
-      if (
-        !isEmpty(formData) &&
-        formData.selectionRange &&
-        formData.selectionRange.startDate &&
-        formData.selectionRange.endDate
-      ) {
-        formData.selectionRange.startDate = new Date(formData.selectionRange.startDate);
-        formData.selectionRange.endDate = new Date(formData.selectionRange.endDate);
+      if (!isEmpty(formData)) {
+        if (formData.selectionRange && formData.selectionRange.startDate && formData.selectionRange.endDate) {
+          formData.selectionRange.startDate = new Date(formData.selectionRange.startDate);
+          formData.selectionRange.endDate = new Date(formData.selectionRange.endDate);
+        }
         if (formData.threadType && !isEmpty(formData.threadType)) {
           setThreadOptions(formData.threadType);
         }
         if (formData.selectedEntry && !isEmpty(formData.selectedEntry)) {
           setSelectedEntry(formData.selectedEntry);
         }
-        setState(formData);
+        setState({ ...defaultState, ...formData });
         if (shouldSearch) {
           setTimeout(refetch, 200);
         }
