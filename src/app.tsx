@@ -522,29 +522,39 @@ export class App extends React.Component<{}, AppState> {
 
         return (
           <div
-            className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-4 mb-6 overflow-hidden"
+            className="w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-2 mb-2 overflow-hidden"
             key={comment.id}
           >
             <div className="flex justify-between items-start">
               <a
-                className={linkClass + " text-lg font-semibold leading-5"}
+                className={linkClass + " text-md font-semibold leading-5"}
                 target="_blank"
                 onClick={(e) => this.handleAuthorClick(e, comment)}
                 href={`https://${this.state.old ? "old" : "www"}.reddit.com/u/${comment.author}`}
               >
                 <span className="sr-only">Comment Author:</span> {comment.author}
               </a>
-              <span
-                className="bg-orange-600 rounded-full px-3 py-1 text-xs text-white"
-                title={`Score: ${comment.score} point${comment.score !== 1 ? "s" : ""}`}
-              >
-                <span className="sr-only">Comment Score:</span> {comment.score}
-              </span>
+              <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
+                <span
+                  className="bg-orange-600 rounded-full px-1 mx-2 py-1 text-xs text-white"
+                  title={`Score: ${comment.score} point${comment.score !== 1 ? "s" : ""}`}
+                >
+                  <span className="sr-only">Comment Score:</span> {comment.score}
+                </span>
+                {threadBadge}
+                <span
+                  className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white cursor-pointer"
+                  onClick={this.toggleDate}
+                  title={timeTitle}
+                >
+                  <span className="sr-only">Comment Posted:</span> {timeText}
+                </span>
+              </div>
             </div>
             <a
               href={`https://${this.state.old ? "old" : "www"}.reddit.com${permalink}?context=1`}
               onClick={(e) => this.handleResultClick(e, comment)}
-              className="block text-sm leading-5 py-4 px-2 reddit-comment"
+              className="block text-sm leading-0 py-1 px-1 reddit-comment"
               target="_blank"
             >
               <ReactMarkdown
@@ -554,16 +564,6 @@ export class App extends React.Component<{}, AppState> {
                 unwrapDisallowed
               />
             </a>
-            <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
-              {threadBadge}
-              <span
-                className="bg-blue-900 dark:bg-cyan-900 rounded-full px-3 py-1 text-xs text-white cursor-pointer"
-                onClick={this.toggleDate}
-                title={timeTitle}
-              >
-                <span className="sr-only">Comment Posted:</span> {timeText}
-              </span>
-            </div>
           </div>
         );
       });
@@ -795,7 +795,7 @@ export class App extends React.Component<{}, AppState> {
           draggable={false}
           pauseOnHover
         />
-        <div id="search-form-panel" className="md:w-2/6 xl:w-1/4 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg">
+        <div id="search-form-panel" className="md:w-1/6 xl:w-1/6 min-w-500 p-4 bg-blue-200 dark:bg-gray-900 shadow-lg">
           <form role="search" aria-label="Search Form" onSubmit={this.searchSubmit}>
             <h1 id="app-title" className="text-2xl text-gray-700 dark:text-gray-100 font-mono tracking-tighter">
               {Constants.appName}
