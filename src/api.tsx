@@ -1,25 +1,25 @@
-import * as React from "react";
-
 import { subDays } from "date-fns";
 import { Constants, SearchRange } from "./constants";
+import type { Content } from "./components/content";
 
 export interface SearchSettings {
   query: string;
   author: string;
   time: string;
+  subreddit: string;
   selectionRange: any;
   sort: string;
   score: number | string;
   old: boolean;
+  posts: boolean;
+  postsImageOnly: boolean;
   showDate: boolean;
-  threadType?: object;
 }
 
 export class PushshiftAPI {
-  get_url(settings: SearchSettings, beta: boolean): string {
-    let args: Record<string, any> = {
-      subreddit: Constants.appSubreddit,
-      filter: "permalink,link_id,id,body,author,score,created_utc",
+  constructUrl(settings: SearchSettings, beta: boolean): string {
+    const args: Record<string, any> = {
+      subreddit: settings.subreddit || Constants.appSubreddit,
     };
 
     if (!beta) {
@@ -27,10 +27,10 @@ export class PushshiftAPI {
       args["user_removed"] = false;
       args["mod_removed"] = false;
       args["sortType"] = "created_utc";
-      args["size"] = 100;
+      args["size"] = Constants.limit;
     } else {
       args["sort"] = "created_utc";
-      args["limit"] = 250;
+      args["limit"] = Constants.limit;
     }
 
     if (settings.query) {
@@ -50,8 +50,8 @@ export class PushshiftAPI {
         args["after"] = settings.time;
       }
     } else {
-      let startDate = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
-      let endDate = Math.floor(settings.selectionRange.endDate.setHours(23, 59, 59, 999) / 1000);
+      const startDate = Math.floor(settings.selectionRange.startDate.getTime() / 1000);
+      const endDate = Math.floor(settings.selectionRange.endDate.setHours(23, 59, 59, 999) / 1000);
       if (beta) {
         args["since"] = startDate;
         args["until"] = endDate;
@@ -75,32 +75,32 @@ export class PushshiftAPI {
         args["score"] = `>${settings.score}`;
       }
     }
+    if (settings.posts && settings.postsImageOnly) {
+      args["is_self"] = false;
+    }
 
-    let joinedArgs = Object.entries(args)
-      .map(([k, v]) => `${k}=${v}`)
-      .join("&");
+    const joinedArgs = new URLSearchParams(args).toString();
 
     // For testing error handling
     // return 'https://httpstat.us/521';
-    return `https://${beta ? "beta" : "api"}.pushshift.io/${
-      beta ? "search/reddit/comments" : "reddit/comment/search"
-    }?${joinedArgs}`;
+    const commentPath = beta ? "search/reddit/comments" : "reddit/comment/search";
+    const path = settings.posts ? "reddit/submission/search" : commentPath;
+    return `https://${beta ? "beta" : "api"}.pushshift.io/${path}?${joinedArgs}`;
   }
 
   async query(url: string): Promise<any> {
-    let results;
-    let response = await fetch(url, {
+    const response = await fetch(url, {
       referrerPolicy: "no-referrer",
     });
 
     const isJson = response.headers.get("content-type")?.includes("application/json");
-    results = isJson ? await response.json() : null;
+    const results = isJson ? await response.json() : null;
 
     // check for error response
     if (!response.ok) {
       throw response.statusText;
     }
 
-    return results.data;
+    return results.data as Content[];
   }
 }

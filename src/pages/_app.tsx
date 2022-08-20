@@ -7,7 +7,10 @@ import Head from "next/head";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 import "react-toastify/dist/ReactToastify.css";
-
+import { ToastContainer } from "react-toastify";
+import * as React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SearchContextProvider } from "../data/context";
 export function reportWebVitals({ id, name, label, value }: NextWebVitalsMetric) {
   event(name, {
     category: label === "web-vital" ? "Web Vitals" : "Next.js custom metric",
@@ -16,6 +19,8 @@ export function reportWebVitals({ id, name, label, value }: NextWebVitalsMetric)
     nonInteraction: true, // avoids affecting bounce rate.
   });
 }
+
+const client = new QueryClient();
 
 function MyApp({ Component, pageProps }: AppProps) {
   usePageViews();
@@ -37,8 +42,24 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
       </Head>
       <div className="mainContent">
+        <ToastContainer
+          position="top-center"
+          theme="colored"
+          autoClose={2000}
+          hideProgressBar
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable={false}
+          pauseOnHover
+        />
         <GoogleAnalytics gaMeasurementId={"G-BTJMKGNN1B"} />
-        <Component {...pageProps} />
+        <QueryClientProvider client={client}>
+          <SearchContextProvider>
+            <Component {...pageProps} />
+          </SearchContextProvider>
+        </QueryClientProvider>
       </div>
     </>
   );

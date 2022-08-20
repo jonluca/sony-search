@@ -13,7 +13,7 @@ export class ErrorWrapper extends React.Component<{ children?: any }, ErrorState
   }
 
   componentDidCatch(error, info) {
-    this.setState({ errorOccurred: true, errorInfo: info, error: error });
+    this.setState({ errorOccurred: true, errorInfo: info, error });
   }
 
   render() {
