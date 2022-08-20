@@ -63,7 +63,7 @@ const NoContent = () => {
   );
 };
 export const ContentContainer = () => {
-  const { old, showDate, setState, error, commentsOrPosts, searching, filteredCount } = useSearchContext();
+  const { error, commentsOrPosts, searching, filteredCount } = useSearchContext();
 
   if (searching) {
     return (

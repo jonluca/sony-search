@@ -20,6 +20,7 @@ module.exports = {
   plugins: ["prettier", "unused-imports", "@typescript-eslint", "react", "@typescript-eslint"],
   rules: {
     "react/no-children-prop": "off",
+    "react/no-unescaped-entities": "off",
     "prefer-const": "error",
     curly: ["error", "all"],
     "@typescript-eslint/no-this-alias": "off",
