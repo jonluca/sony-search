@@ -29,6 +29,11 @@ export const usePushshiftQuery = (searchSettings: SearchSettings) => {
         if ("link_flair_text" in datum) {
           datum.thread = datum.link_flair_text;
         } else {
+          const hasGearThread = datum.permalink?.includes("weekly_rsonyalpha");
+
+          if (hasGearThread) {
+            datum.thread = "Weekly Gear Thread";
+          }
           // import from permalink
         }
       }

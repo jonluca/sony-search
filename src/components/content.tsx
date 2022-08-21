@@ -89,6 +89,7 @@ export const ContentView = ({ content, isFull }: { isFull?: boolean; content: Co
 
   const body = ("body" in content && content.body) || ("selftext" in content && content.selftext);
 
+  const title = (content as Post).title || "Permalink";
   return (
     <div
       className="flex flex-col w-full rounded-md bg-gray-100 dark:bg-gray-900 shadow p-2 mb-2 overflow-hidden"
@@ -113,29 +114,27 @@ export const ContentView = ({ content, isFull }: { isFull?: boolean; content: Co
           >
             <span className="sr-only">Comment Author:</span> {content.author}
           </a>
-          {"title" in content && (
-            <>
-              {" - "}
-              <a
-                className={linkClass + " text-md font-semibold leading-5"}
-                target="_blank"
-                onClick={() => {
-                  if (!Constants.isDevMode) {
-                    ReactGA.event("click", {
-                      category: "Title",
-                      action: "Click",
-                      label: content.title,
-                    });
-                  }
-                }}
-                href={permalinkLink}
-                rel="noreferrer"
-              >
-                <span className="sr-only">Title:</span>
-                {content.title}
-              </a>
-            </>
-          )}
+          <>
+            {" - "}
+            <a
+              className={linkClass + " text-md font-semibold leading-5"}
+              target="_blank"
+              onClick={() => {
+                if (!Constants.isDevMode) {
+                  ReactGA.event("click", {
+                    category: "Title",
+                    action: "Click",
+                    label: title,
+                  });
+                }
+              }}
+              href={permalinkLink}
+              rel="noreferrer"
+            >
+              <span className="sr-only">Title:</span>
+              {title}
+            </a>
+          </>
         </span>
         <div className={`flex ${threadBadge ? "justify-between" : "justify-end"}`}>
           <span
@@ -175,13 +174,26 @@ export const ContentView = ({ content, isFull }: { isFull?: boolean; content: Co
           </span>
         </div>
       </div>
+      {isFull && (
+        <div className="flex justify-between items-start">
+          {content.author_flair_text && (
+            <span className="bg-blue-400 rounded-full px-2 mx-2 py-1 mx-1 text-xs text-white">
+              Author Flair: {content.author_flair_text}
+            </span>
+          )}
+          {content.stickied && (
+            <span className="bg-orange-600 rounded-full px-2 mx-2 py-1 mx-1 text-xs text-white">Stickied</span>
+          )}
+          {"retrieved_on" in content && content.retrieved_on && (
+            <span className="bg-orange-600 rounded-full px-2 mx-2 py-1 mx-1 text-xs text-white">
+              Post retrieved on: {new Date(content.retrieved_on * 1000).toLocaleString()}
+            </span>
+          )}
+        </div>
+      )}
       <div
         onClick={() => {
-          if (selectedEntry === content) {
-            window.open(permalinkLink, "_blank");
-          } else {
-            setSelectedEntry(content);
-          }
+          setSelectedEntry(content);
           if (!Constants.isDevMode) {
             ReactGA.event("Result", {
               category: "Result",
@@ -195,7 +207,9 @@ export const ContentView = ({ content, isFull }: { isFull?: boolean; content: Co
             });
           }
         }}
-        className="flex h-full overflow-hidden text-sm leading-0 py-1 px-1fz reddit-comment cursor-pointer"
+        className={`flex flex-col text-white h-full overflow-hidden text-sm leading-0 py-1 px-1fz reddit-comment ${
+          isFull ? "" : "cursor-pointer"
+        }`}
       >
         {body && (
           <ReactMarkdown
@@ -206,7 +220,11 @@ export const ContentView = ({ content, isFull }: { isFull?: boolean; content: Co
           />
         )}
         {!videoEmbed && imageUrl && (
-          <img className={"object-contain max-h-100"} src={imageUrl} style={{ maxHeight: isFull ? undefined : 400 }} />
+          <img
+            className={"object-contain max-h-100"}
+            src={imageUrl}
+            style={{ maxHeight: isFull ? undefined : 400, minHeight: isFull ? 400 : undefined }}
+          />
         )}
         {videoEmbed && <div dangerouslySetInnerHTML={{ __html: videoEmbed }} />}
       </div>
