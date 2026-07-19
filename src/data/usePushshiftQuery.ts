@@ -4,6 +4,7 @@ import { PushshiftAPI } from "../api";
 import { Constants } from "../constants";
 import { utils } from "./context";
 import type { Content } from "../components/content";
+import { hasRenderableMedia } from "../media";
 const api = new PushshiftAPI();
 
 export const usePushshiftQuery = (searchSettings: SearchSettings) => {
@@ -38,7 +39,7 @@ export const usePushshiftQuery = (searchSettings: SearchSettings) => {
         }
       }
 
-      return data;
+      return searchSettings.posts && searchSettings.postsImageOnly ? data.filter(hasRenderableMedia) : data;
     },
     {
       refetchOnWindowFocus: false,

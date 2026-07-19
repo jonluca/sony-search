@@ -33,8 +33,8 @@ export interface ExtensionContext extends SearchSettings {
   error: any | null;
   searching: boolean;
   shareUrl: string;
-  commentsOrPosts: Array<Content>;
-  allData: Array<Content>;
+  commentsOrPosts: Array<Content> | undefined;
+  allData: Array<Content> | undefined;
   selectedEntry: null | Content;
   setSelectedEntry: Dispatch<SetStateAction<null | Content>>;
   totalCount: number;
@@ -90,11 +90,16 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
   const [state, setState] = useState<SearchSettings>(defaultState);
   const [threadOptions, setThreadOptions] = useState({});
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [storageLoaded, setStorageLoaded] = useState(false);
+  const [sharedSearchPending, setSharedSearchPending] = useState(false);
   const { refetch, error, data, isLoading, fetchStatus } = usePushshiftQuery(state);
 
   useEffect(() => {
-    localStorage.setItem(Constants.appId, utils.compress(state));
-  }, [state]);
+    if (!storageLoaded) {
+      return;
+    }
+    localStorage.setItem(Constants.appId, utils.compress({ ...state, threadType: threadOptions }));
+  }, [state, storageLoaded, threadOptions]);
 
   useEffect(() => {
     const loadSavedState = (formData: any = {}, shouldSearch = false) => {
@@ -111,7 +116,7 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
         }
         setState({ ...defaultState, ...formData });
         if (shouldSearch) {
-          setTimeout(refetch, 200);
+          setSharedSearchPending(true);
         }
       }
     };
@@ -122,6 +127,7 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
       console.log("Loaded state from location.hash");
       // Remove hash now that we have the data
       history.replaceState(null, null, " ");
+      setStorageLoaded(true);
       return;
     }
 
@@ -131,7 +137,17 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
       loadSavedState(localStorageData);
       console.log("Loaded state from local storage");
     }
+    setStorageLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!sharedSearchPending) {
+      return;
+    }
+
+    setSharedSearchPending(false);
+    void refetch();
+  }, [refetch, sharedSearchPending]);
 
   useEffect(() => {
     if (!data) {
@@ -144,7 +160,7 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
       const threadsList: string[] = Array.from(new Set(data.map((c) => c.thread))).sort();
       for (let thread of threadsList) {
         thread ||= "None";
-        if (!isEmpty(threadOptions) && "thread" in oldThreadOptions) {
+        if (thread in oldThreadOptions) {
           threadsOptions[thread] = oldThreadOptions[thread];
         } else {
           threadsOptions[thread] = true;
@@ -156,7 +172,11 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
   }, [data]);
 
   const commentsOrPosts = React.useMemo(() => {
-    return (data || []).filter((comment) => {
+    if (data === undefined) {
+      return undefined;
+    }
+
+    return data.filter((comment) => {
       const selected = Object.keys(threadOptions).filter((x) => threadOptions[x]);
       if (!comment.thread) {
         return selected.includes("None");
@@ -165,7 +185,10 @@ const SearchContextProvider = (props: React.PropsWithChildren) => {
       }
     });
   }, [threadOptions, data]);
-  const shareUrl = `${typeof window === "undefined" ? "/" : window.location.href}#${utils.compress(state)}`;
+  const shareUrl = `${typeof window === "undefined" ? "/" : window.location.href}#${utils.compress({
+    ...state,
+    threadType: threadOptions,
+  })}`;
   return (
     <SearchContext.Provider
       value={{

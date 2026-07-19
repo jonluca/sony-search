@@ -7,31 +7,10 @@ import { Constants, linkClass } from "../constants";
 import type { Comment, Post } from "../types";
 import { useSearchContext } from "../data/context";
 import * as ReactGA from "nextjs-google-analytics";
+import { getImageUrl } from "../media";
 
 export type Content = (Comment | Post) & { thread: string };
 
-const getImageUrl = (content: Content) => {
-  const url = "url" in content && String(content.url);
-  if (url) {
-    try {
-      const parsed = new URL(url.startsWith("/r/") ? `https://reddit.com${url}` : url);
-      if (parsed.pathname.match(/\.(jpeg|jpg|gif|png)$/)) {
-        return parsed.href;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  if ("thumbnail" in content && content.thumbnail) {
-    try {
-      const url = new URL(content.thumbnail);
-      return url.href;
-    } catch {
-      // do nothing here;
-    }
-  }
-  return null;
-};
 const disallowedElements = ["link"];
 const remarkPlugins = [gfm];
 const getVideoEmbed = (content: Content) => {

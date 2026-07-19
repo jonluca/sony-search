@@ -7,8 +7,16 @@ import { handleOutboundClick } from "../app";
 import { useSearchContext } from "../data/context";
 import { ContentHeader } from "./content-header";
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message || error.name;
+  }
+  return String(error);
+};
+
 const NoContent = () => {
   const { old, error } = useSearchContext();
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
     <div
@@ -16,7 +24,7 @@ const NoContent = () => {
       className="flex-1 p-4 overflow-y-scroll bg-white dark:bg-black text-gray-700 dark:text-gray-100"
     >
       <div className="w-full xl:w-3/4 lg:w-5/6 mx-auto">
-        {error && (
+        {errorMessage && (
           <div className="flex items-start bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded" role="alert">
             <svg
               className="w-6 h-6 mr-2"
@@ -32,7 +40,7 @@ const NoContent = () => {
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <div className="font-bold">Error: {error}</div>
+            <div className="font-bold">Error: {errorMessage}</div>
           </div>
         )}
         <div className="text-center py-4">
@@ -64,6 +72,7 @@ const NoContent = () => {
 };
 export const ContentContainer = () => {
   const { error, commentsOrPosts, searching, filteredCount } = useSearchContext();
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   if (searching) {
     return (
@@ -91,7 +100,7 @@ export const ContentContainer = () => {
         aria-label="Search Results"
         className="flex-1 overflow-y-scroll p-4 md:px-6 lg:px-8"
       >
-        {error && (
+        {errorMessage && (
           <div
             className="bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 border border-red-400 divide-y divide-red-400 p-4 mb-4 rounded"
             role="alert"
@@ -111,7 +120,7 @@ export const ContentContainer = () => {
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <div className="font-bold">Error: {error}</div>
+              <div className="font-bold">Error: {errorMessage}</div>
             </div>
             <div className="pt-4 text-sm">
               If{" "}
